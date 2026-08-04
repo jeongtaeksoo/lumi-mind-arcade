@@ -58,3 +58,4 @@ passed
 - Verified pause freezes the timer, five wrong clicks reach `남은 하트 0개`, and the result screen opens.
 - Verified desktop at 1440 × 900 and mobile at 390 × 844.
 - Browser console logs: empty after the tested flows.
+- Memory mode cards are vertically and horizontally centered inside the playfield on desktop and mobile.
