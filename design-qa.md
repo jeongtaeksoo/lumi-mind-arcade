@@ -49,3 +49,12 @@
 ## Final result
 
 passed
+
+## Game loop pass — 2026-08-04
+
+- Added a visible `1 / 3` stage HUD and dynamic stage tracker for every round.
+- Each round now runs all three modes exactly once; the tracker reflects the shuffled order.
+- Focus mode has a visible countdown timer: 5.0s → 4.0s → 3.5s → 2.8s → 2.0s by round.
+- Verified pause freezes the timer, five wrong clicks reach `남은 하트 0개`, and the result screen opens.
+- Verified desktop at 1440 × 900 and mobile at 390 × 844.
+- Browser console logs: empty after the tested flows.

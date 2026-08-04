@@ -5,21 +5,24 @@ const ui = {
   howTo: $("#how-to-button"), dialogStart: $("#dialog-start-button"), dialog: $("#how-to-dialog"), closeDialog: $("#close-how-to"),
   homeWorld: $(".home-world"), homeLumi: $("#home-lumi"), modeCards: [...document.querySelectorAll(".mode-card[data-lumi-state]")],
   playfield: $("#playfield"), round: $("#round-label"), title: $("#game-status-title"), score: $("#score-label"), hearts: $("#hearts"),
+  stage: $("#stage-label"), stageSteps: [...document.querySelectorAll("[data-stage-step]")], modeIcon: $(".mode-hud-icon"),
   instruction: $("#instruction-label"), combo: $("#combo-label"), progress: $("#progress-bar"), hint: $("#hint-text"),
+  timerPanel: $("#timer-panel"), timerLabel: $("#timer-label"), timerBar: $("#timer-bar"),
   gameLumi: $("#game-lumi"), speechTitle: $("#speech-title"), speechText: $("#speech-text"), meter: $("#round-meter-fill"),
   resultScore: $("#result-score"), resultCombo: $("#result-combo"), resultFocus: $("#result-focus"), resultMemory: $("#result-memory"), resultPattern: $("#result-pattern"),
   resultMessage: $("#result-message"), resultHome: $("#result-home-button"), progressLabel: $("#round-progress-label"), shortcuts: [...document.querySelectorAll(".shortcut-card")], share: $("#share-button"), toast: $("#toast")
 };
 
 const MODE_INFO = {
-  focus: { label: "집중 모드", instruction: "목표를 클릭하세요" },
-  memory: { label: "기억 모드", instruction: "빛난 순서대로 눌러보세요" },
-  pattern: { label: "패턴 모드", instruction: "달라진 패턴을 찾아보세요" }
+  focus: { label: "집중 모드", short: "집중", instruction: "목표를 제한 시간 안에 클릭하세요", hint: "순발력 타이머가 끝나기 전에 빛나는 목표를 눌러요." },
+  memory: { label: "기억 모드", short: "기억", instruction: "빛난 순서대로 눌러보세요", hint: "루미가 보여준 순서를 천천히 떠올려요." },
+  pattern: { label: "패턴 모드", short: "패턴", instruction: "달라진 패턴을 찾아보세요", hint: "모양과 색이 다른 타일 하나를 찾아요." }
 };
 
 const state = {
   round: 1, hearts: 5, score: 0, combo: 0, bestCombo: 0, mode: "focus", roundProgress: 0,
-  finalLevel: 1, roundTimer: null, memoryTimer: null, paused: false, modes: [], stats: { focus: 0, memory: 0, pattern: 0 }
+  finalLevel: 1, stageIndex: 0, roundPlan: [], stageLocked: false, roundTimer: null, memoryTimer: null, timerInterval: null,
+  paused: false, stats: { focus: 0, memory: 0, pattern: 0 }
 };
 
 function showScreen(name) { Object.values(screens).forEach((screen) => screen.classList.remove("active")); screens[name].classList.add("active"); window.scrollTo(0, 0); requestAnimationFrame(() => window.scrollTo(0, 0)); setTimeout(() => window.scrollTo(0, 0), 40); }
@@ -27,15 +30,9 @@ function randomItem(list) { return list[Math.floor(Math.random() * list.length)]
 function shuffle(list) { return [...list].sort(() => Math.random() - 0.5); }
 function formatScore(score) { return String(Math.max(0, score)).padStart(3, "0"); }
 
-function chooseMode() {
-  if (!state.modes.length) state.modes = shuffle(["focus", "memory", "pattern"]);
-  state.mode = state.modes.shift();
-  return state.mode;
-}
-
 function resetState() {
   clearTimers();
-  Object.assign(state, { round: 1, hearts: 5, score: 0, combo: 0, bestCombo: 0, mode: "focus", roundProgress: 0, finalLevel: 1, paused: false, modes: [], stats: { focus: 0, memory: 0, pattern: 0 } });
+  Object.assign(state, { round: 1, hearts: 5, score: 0, combo: 0, bestCombo: 0, mode: "focus", roundProgress: 0, finalLevel: 1, stageIndex: 0, roundPlan: [], stageLocked: false, paused: false, stats: { focus: 0, memory: 0, pattern: 0 } });
   renderHearts();
 }
 
@@ -48,27 +45,55 @@ function startGame() {
 function clearTimers() {
   if (state.roundTimer) clearTimeout(state.roundTimer);
   if (state.memoryTimer) clearTimeout(state.memoryTimer);
+  if (state.timerInterval) clearInterval(state.timerInterval);
   state.roundTimer = null;
   state.memoryTimer = null;
+  state.timerInterval = null;
 }
 
 function beginRound() {
   clearTimers();
   state.paused = false;
   state.roundProgress = 0;
-  const mode = chooseMode();
-  ui.round.textContent = state.round >= 5 ? `ROUND 5 / 5 · FINAL ${state.finalLevel}` : `ROUND ${state.round} / 5`;
-  ui.title.textContent = MODE_INFO[mode].label;
-  ui.instruction.textContent = MODE_INFO[mode].instruction;
-  ui.progress.style.width = "0%";
-  ui.progressLabel.textContent = "0%";
-  ui.meter.style.width = `${Math.min(100, state.round * 20)}%`;
+  state.stageIndex = 0;
+  state.roundPlan = shuffle(["focus", "memory", "pattern"]);
+  beginStage();
+}
+
+function beginStage() {
+  clearTimers();
+  state.paused = false;
+  state.stageLocked = false;
+  state.mode = state.roundPlan[state.stageIndex] || "focus";
+  const info = MODE_INFO[state.mode];
+  ui.round.textContent = state.round >= 5 ? `라운드 5 / 5 · 최종 ${state.finalLevel}` : `라운드 ${state.round} / 5`;
+  ui.stage.textContent = `${state.stageIndex + 1} / 3`;
+  ui.title.textContent = info.label;
+  ui.instruction.textContent = info.instruction;
+  ui.hint.textContent = info.hint;
+  ui.modeIcon.className = `mode-hud-icon ${state.mode === "focus" ? "target-icon" : state.mode === "memory" ? "memory-icon" : "pattern-icon"}`;
+  ui.modeIcon.textContent = state.mode === "memory" ? "✦" : state.mode === "pattern" ? "◇" : "";
+  ui.progress.style.width = `${(state.stageIndex / 3) * 100}%`;
+  ui.progressLabel.textContent = `${Math.round((state.stageIndex / 3) * 100)}%`;
+  ui.meter.style.width = `${Math.min(100, ((state.round - 1) * 3 + state.stageIndex) / 15 * 100)}%`;
+  renderStageTracker();
   setLumiState(Math.min(4, state.round - 1));
   setSpeechForRound();
   renderHearts();
-  if (mode === "focus") renderFocus();
-  if (mode === "memory") renderMemory();
-  if (mode === "pattern") renderPattern();
+  if (state.mode === "focus") renderFocus();
+  if (state.mode === "memory") renderMemory();
+  if (state.mode === "pattern") renderPattern();
+}
+
+function renderStageTracker() {
+  ui.stageSteps.forEach((step, index) => {
+    const label = step.querySelector("span");
+    if (label && state.roundPlan[index]) label.textContent = MODE_INFO[state.roundPlan[index]].short;
+    step.classList.toggle("active", index === state.stageIndex);
+    step.classList.toggle("complete", index < state.stageIndex);
+    step.classList.remove("failed");
+    step.setAttribute("aria-current", index === state.stageIndex ? "step" : "false");
+  });
 }
 
 function setHomeLumiState(index) { ui.homeLumi.className = `lumi-sprite lumi-home state-${index}`; }
@@ -152,19 +177,11 @@ function reward(points) {
 }
 
 function setSpeech(title, text) { ui.speechTitle.textContent = title; ui.speechText.textContent = text; }
-function roundGoal() { return state.round >= 5 ? Infinity : 3 + state.round; }
-
 function advanceRound() {
   if (state.round >= 5) {
     state.finalLevel += 1;
-    state.roundProgress = 0;
-    ui.round.textContent = `ROUND 5 / 5 · FINAL ${state.finalLevel}`;
-    ui.progress.style.width = `${Math.min(94, 20 + state.finalLevel * 12)}%`;
-    setSpeech("계속 가볼까요?", `최종 라운드 ${state.finalLevel}단계예요.`);
-    chooseMode();
-    if (state.mode === "focus") renderFocus();
-    if (state.mode === "memory") renderMemory();
-    if (state.mode === "pattern") renderPattern();
+    beginRound();
+    setSpeech("계속 가볼까요?", `최종 라운드 ${state.finalLevel}단계예요. 세 게임을 다시 달려요.`);
     return;
   }
   state.round += 1;
@@ -172,27 +189,28 @@ function advanceRound() {
 }
 
 function completeChallenge(points) {
+  if (state.stageLocked || state.paused) return;
+  state.stageLocked = true;
+  clearTimers();
   reward(points);
   state.stats[state.mode] += 1;
-  state.roundProgress += 1;
-  const goal = roundGoal();
-  ui.progress.style.width = `${Math.min(100, (state.roundProgress / goal) * 100)}%`;
-  ui.progressLabel.textContent = `${Math.round(Math.min(100, (state.roundProgress / goal) * 100))}%`;
-  if (state.round >= 5) {
-    ui.progress.style.width = `${Math.min(94, 20 + state.finalLevel * 12)}%`;
-    setTimeout(() => { if (state.hearts > 0) advanceRound(); }, 210);
+  state.roundProgress = state.stageIndex + 1;
+  ui.progress.style.width = `${(state.roundProgress / 3) * 100}%`;
+  ui.progressLabel.textContent = `${Math.round((state.roundProgress / 3) * 100)}%`;
+  ui.stageSteps[state.stageIndex].classList.remove("active");
+  ui.stageSteps[state.stageIndex].classList.add("complete");
+  if (state.stageIndex >= 2) {
+    setSpeech("라운드 클리어!", state.round >= 5 ? "최종 라운드 한 사이클 완료! 계속 도전해요." : "세 가지 게임을 모두 통과했어요.");
+    setTimeout(() => { if (state.hearts > 0) advanceRound(); }, state.round >= 5 ? 360 : 620);
     return;
   }
-  if (state.roundProgress >= goal) {
-    setSpeech("라운드 클리어!", "다음 도전이 기다리고 있어요.");
-    setTimeout(advanceRound, 520);
-  } else {
-    setTimeout(() => {
-      if (state.mode === "focus") renderFocus();
-      if (state.mode === "memory") renderMemory();
-      if (state.mode === "pattern") renderPattern();
-    }, 230);
-  }
+  setSpeech("좋아요!", `${MODE_INFO[state.roundPlan[state.stageIndex + 1]].short} 게임으로 이어가요.`);
+  setTimeout(() => {
+    if (state.hearts > 0) {
+      state.stageIndex += 1;
+      beginStage();
+    }
+  }, 420);
 }
 
 function placeRandomly(element, margin = 12) {
@@ -201,6 +219,37 @@ function placeRandomly(element, margin = 12) {
   const y = margin + Math.random() * Math.max(10, rect.height - margin * 2);
   element.style.left = `${x}px`;
   element.style.top = `${y}px`;
+}
+
+function reactionLimitMs() {
+  const limits = [5000, 4000, 3500, 2800, 2000];
+  const cyclePenalty = state.round >= 5 ? Math.max(0, state.finalLevel - 1) * 200 : 0;
+  return Math.max(1200, limits[state.round - 1] - cyclePenalty);
+}
+
+function hideReactionTimer() {
+  ui.timerPanel.classList.add("is-hidden");
+  ui.timerPanel.classList.remove("urgent");
+  ui.timerBar.style.transform = "scaleX(1)";
+}
+
+function startReactionTimer(duration) {
+  clearTimers();
+  ui.timerPanel.classList.remove("is-hidden", "urgent");
+  const startedAt = performance.now();
+  const tick = () => {
+    const remaining = Math.max(0, duration - (performance.now() - startedAt));
+    const ratio = remaining / duration;
+    ui.timerLabel.textContent = `${(remaining / 1000).toFixed(1)}초`;
+    ui.timerBar.style.transform = `scaleX(${ratio})`;
+    ui.timerPanel.classList.toggle("urgent", ratio <= 0.3);
+    if (remaining <= 0) {
+      clearTimers();
+      if (!loseHeart()) renderFocus();
+    }
+  };
+  tick();
+  state.timerInterval = setInterval(tick, 50);
 }
 
 function renderFocus() {
@@ -218,15 +267,12 @@ function renderFocus() {
     decoy.style.borderColor = randomItem(["#ff8ec5", "#b990ff", "#ff9f82"]); placeRandomly(decoy, 50);
     decoy.addEventListener("click", () => loseHeart()); ui.playfield.appendChild(decoy);
   }
-  const delay = Math.max(3200, 10000 - state.round * 1150 - (state.round >= 5 ? state.finalLevel * 400 : 0));
-  state.roundTimer = setTimeout(() => {
-    if (state.paused) return;
-    if (!loseHeart()) renderFocus();
-  }, delay);
+  startReactionTimer(reactionLimitMs());
 }
 
 function renderMemory() {
   clearTimers();
+  hideReactionTimer();
   ui.playfield.innerHTML = "";
   const length = Math.min(7, 3 + state.round + (state.round >= 5 ? Math.ceil(state.finalLevel / 2) : 0));
   const symbols = ["◆", "●", "✦", "■", "✧", "▲", "◇"];
@@ -256,6 +302,7 @@ function renderMemory() {
 
 function renderPattern() {
   clearTimers();
+  hideReactionTimer();
   ui.playfield.innerHTML = "";
   const size = state.round >= 5 ? Math.min(8, 5 + Math.ceil(state.finalLevel / 2)) : 4 + Math.ceil(state.round / 2);
   const board = document.createElement("div"); board.className = "pattern-board"; board.style.gridTemplateColumns = `repeat(${Math.min(size, 7)}, minmax(32px, 1fr))`; ui.playfield.appendChild(board);
@@ -276,6 +323,7 @@ function renderPattern() {
 
 function showResults() {
   clearTimers();
+  hideReactionTimer();
   const average = (key) => Math.min(99, 50 + state.stats[key] * 8 + Math.floor(Math.random() * 12));
   ui.resultScore.textContent = String(state.score).padStart(4, "0");
   ui.resultCombo.textContent = `x${state.bestCombo}`;

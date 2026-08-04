@@ -76,6 +76,9 @@
             <span class="mode-hud-icon target-icon" aria-hidden="true"></span>
             <div><small>모드</small><strong id="game-status-title">집중 모드</strong></div>
           </div>
+          <div class="stage-status">
+            <span>스테이지</span><strong id="stage-label">1 / 3</strong>
+          </div>
           <div class="score-status"><span>점수</span><strong id="score-label">000</strong></div>
           <div id="hearts" class="hearts" aria-label="남은 하트 5개"></div>
           <button id="pause-button" class="icon-button" type="button" aria-label="일시정지">Ⅱ</button>
@@ -88,9 +91,20 @@
               <span id="combo-label" class="combo-label">콤보 x0</span>
             </div>
             <div id="playfield" class="playfield" aria-live="polite"></div>
+            <div id="timer-panel" class="timer-panel is-hidden" aria-live="polite">
+              <div class="timer-copy"><span>순발력 챌린지</span><strong id="timer-label">5.0초</strong></div>
+              <div class="timer-track"><span id="timer-bar"></span></div>
+            </div>
             <div class="progress-caption"><span>◷</span><strong>목표 진행</strong><em id="round-progress-label">0%</em></div>
             <div class="progress-track"><span id="progress-bar" class="progress-bar"></span></div>
             <div class="round-hint"><span class="hint-star">✦</span><span id="hint-text">실수하면 하트가 하나 줄어요.</span></div>
+            <div class="stage-tracker" aria-label="이번 라운드 3개 게임">
+              <span class="stage-step active" data-stage-step="0"><b>1</b><span>집중</span></span>
+              <i aria-hidden="true">›</i>
+              <span class="stage-step" data-stage-step="1"><b>2</b><span>기억</span></span>
+              <i aria-hidden="true">›</i>
+              <span class="stage-step" data-stage-step="2"><b>3</b><span>패턴</span></span>
+            </div>
           </section>
 
           <aside class="companion-panel">
