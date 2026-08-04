@@ -70,3 +70,4 @@ passed
 - Decoupled memory-card layout order from reveal order so every round presents a different spatial sequence, not a left-to-right playback.
 - Let wide-screen playfields expand vertically to remove the large lower dead zone, and added generated primary/secondary button frames with HTML text overlays.
 - Constrained pattern boards by calculated row/column ratio so every tile stays inside the playfield, and strengthened the single odd tile with a gold glow and marker.
+- Added the direction mode to the randomized three-of-four round pool, with 5–6-arrow sequences, keyboard/mobile input, and round-based timers.

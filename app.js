@@ -10,19 +10,20 @@ const ui = {
   timerPanel: $("#timer-panel"), timerLabel: $("#timer-label"), timerBar: $("#timer-bar"),
   gameLumi: $("#game-lumi"), speechTitle: $("#speech-title"), speechText: $("#speech-text"), meter: $("#round-meter-fill"),
   resultScore: $("#result-score"), resultCombo: $("#result-combo"), resultFocus: $("#result-focus"), resultMemory: $("#result-memory"), resultPattern: $("#result-pattern"),
-  resultMessage: $("#result-message"), resultHome: $("#result-home-button"), progressLabel: $("#round-progress-label"), share: $("#share-button"), toast: $("#toast"), homeMusic: $("#home-bgm"), gameMusic: $("#game-bgm"), musicToggle: $("#music-toggle")
+  resultDirection: $("#result-direction"), resultMessage: $("#result-message"), resultHome: $("#result-home-button"), progressLabel: $("#round-progress-label"), share: $("#share-button"), toast: $("#toast"), homeMusic: $("#home-bgm"), gameMusic: $("#game-bgm"), musicToggle: $("#music-toggle"), timerTitle: $("#timer-title")
 };
 
 const MODE_INFO = {
   focus: { label: "집중 모드", short: "집중", instruction: "목표를 제한 시간 안에 클릭하세요", hint: "순발력 타이머가 끝나기 전에 빛나는 목표를 눌러요." },
   memory: { label: "기억 모드", short: "기억", instruction: "빛난 순서대로 눌러보세요", hint: "루미가 보여준 순서를 천천히 떠올려요." },
-  pattern: { label: "패턴 모드", short: "패턴", instruction: "달라진 패턴을 찾아보세요", hint: "모양과 색이 다른 타일 하나를 찾아요." }
+  pattern: { label: "패턴 모드", short: "패턴", instruction: "달라진 패턴을 찾아보세요", hint: "모양과 색이 다른 타일 하나를 찾아요." },
+  direction: { label: "방향 모드", short: "방향", instruction: "화면에 나온 순서대로 입력하세요", hint: "키보드 방향키 또는 화면 버튼으로 순서를 완성해요." }
 };
 
 const state = {
   round: 1, hearts: 5, score: 0, combo: 0, bestCombo: 0, mode: "focus", roundProgress: 0,
   finalLevel: 1, stageIndex: 0, roundPlan: [], stageLocked: false, roundTimer: null, memoryTimer: null, timerInterval: null,
-  paused: false, stats: { focus: 0, memory: 0, pattern: 0 }
+  paused: false, directionSequence: [], directionIndex: 0, stats: { focus: 0, memory: 0, pattern: 0, direction: 0 }
 };
 let musicEnabled = true;
 
@@ -33,7 +34,7 @@ function formatScore(score) { return String(Math.max(0, score)).padStart(3, "0")
 
 function resetState() {
   clearTimers();
-  Object.assign(state, { round: 1, hearts: 5, score: 0, combo: 0, bestCombo: 0, mode: "focus", roundProgress: 0, finalLevel: 1, stageIndex: 0, roundPlan: [], stageLocked: false, paused: false, stats: { focus: 0, memory: 0, pattern: 0 } });
+  Object.assign(state, { round: 1, hearts: 5, score: 0, combo: 0, bestCombo: 0, mode: "focus", roundProgress: 0, finalLevel: 1, stageIndex: 0, roundPlan: [], stageLocked: false, paused: false, directionSequence: [], directionIndex: 0, stats: { focus: 0, memory: 0, pattern: 0, direction: 0 } });
   renderHearts();
 }
 
@@ -59,7 +60,7 @@ function beginRound() {
   state.paused = false;
   state.roundProgress = 0;
   state.stageIndex = 0;
-  state.roundPlan = shuffle(["focus", "memory", "pattern"]);
+  state.roundPlan = shuffle(["focus", "memory", "pattern", "direction"]).slice(0, 3);
   beginStage();
 }
 
@@ -74,8 +75,8 @@ function beginStage() {
   ui.title.textContent = info.label;
   ui.instruction.textContent = info.instruction;
   ui.hint.textContent = info.hint;
-  ui.modeIcon.className = `mode-hud-icon ${state.mode === "focus" ? "target-icon" : state.mode === "memory" ? "memory-icon" : "pattern-icon"}`;
-  ui.modeIcon.textContent = state.mode === "memory" ? "✦" : state.mode === "pattern" ? "◇" : "";
+  ui.modeIcon.className = `mode-hud-icon ${state.mode === "focus" ? "target-icon" : state.mode === "memory" ? "memory-icon" : state.mode === "pattern" ? "pattern-icon" : "direction-icon"}`;
+  ui.modeIcon.textContent = state.mode === "memory" ? "✦" : state.mode === "pattern" ? "◇" : state.mode === "direction" ? "↕" : "";
   ui.progress.style.width = `${(state.stageIndex / 3) * 100}%`;
   ui.progressLabel.textContent = `${Math.round((state.stageIndex / 3) * 100)}%`;
   ui.meter.style.width = `${Math.min(100, ((state.round - 1) * 3 + state.stageIndex) / 15 * 100)}%`;
@@ -86,6 +87,7 @@ function beginStage() {
   if (state.mode === "focus") renderFocus();
   if (state.mode === "memory") renderMemory();
   if (state.mode === "pattern") renderPattern();
+  if (state.mode === "direction") renderDirection();
 }
 
 function renderStageTracker() {
@@ -236,7 +238,7 @@ function hideReactionTimer() {
   ui.timerBar.style.transform = "scaleX(1)";
 }
 
-function startReactionTimer(duration) {
+function startReactionTimer(duration, onTimeout = () => { if (!loseHeart()) renderFocus(); }) {
   clearTimers();
   ui.timerPanel.classList.remove("is-hidden", "urgent");
   const startedAt = performance.now();
@@ -248,7 +250,7 @@ function startReactionTimer(duration) {
     ui.timerPanel.classList.toggle("urgent", ratio <= 0.3);
     if (remaining <= 0) {
       clearTimers();
-      if (!loseHeart()) renderFocus();
+      onTimeout();
     }
   };
   tick();
@@ -257,6 +259,7 @@ function startReactionTimer(duration) {
 
 function renderFocus() {
   clearTimers();
+  ui.timerTitle.textContent = "순발력 챌린지";
   ui.playfield.innerHTML = "";
   const distractors = 4 + state.round * 2 + (state.round >= 5 ? state.finalLevel : 0);
   const target = document.createElement("button");
@@ -334,6 +337,69 @@ function renderPattern() {
   }, delay);
 }
 
+const DIRECTION_INFO = {
+  ArrowUp: { symbol: "↑", label: "위" },
+  ArrowDown: { symbol: "↓", label: "아래" },
+  ArrowLeft: { symbol: "←", label: "왼쪽" },
+  ArrowRight: { symbol: "→", label: "오른쪽" }
+};
+
+function directionLimitMs() {
+  const limits = [6000, 5000, 4200, 3500, 2800];
+  const cyclePenalty = state.round >= 5 ? Math.max(0, state.finalLevel - 1) * 180 : 0;
+  return Math.max(1800, limits[state.round - 1] - cyclePenalty);
+}
+
+function renderDirectionProgress() {
+  const chips = [...ui.playfield.querySelectorAll(".direction-chip")];
+  chips.forEach((chip, index) => {
+    chip.classList.toggle("current", index === state.directionIndex);
+    chip.classList.toggle("done", index < state.directionIndex);
+  });
+  const progress = Math.round((state.directionIndex / state.directionSequence.length) * 100);
+  ui.progress.style.width = `${progress}%`;
+  ui.progressLabel.textContent = `${progress}%`;
+}
+
+function handleDirectionInput(direction) {
+  if (state.paused || state.stageLocked || state.mode !== "direction") return;
+  const expected = state.directionSequence[state.directionIndex];
+  const pressed = ui.playfield.querySelector(`.direction-key[data-direction="${direction}"]`);
+  if (pressed) {
+    pressed.classList.remove("pressed", "wrong");
+    void pressed.offsetWidth;
+    pressed.classList.add(direction === expected ? "pressed" : "wrong");
+    setTimeout(() => pressed.classList.remove("pressed", "wrong"), 260);
+  }
+  if (direction !== expected) {
+    if (!loseHeart()) setTimeout(renderDirection, 360);
+    return;
+  }
+  state.directionIndex += 1;
+  renderDirectionProgress();
+  if (state.directionIndex === state.directionSequence.length) completeChallenge(46 + state.round * 6);
+}
+
+function renderDirection() {
+  clearTimers();
+  ui.timerTitle.textContent = "방향 입력 타이머";
+  ui.playfield.innerHTML = "";
+  const length = Math.min(6, 5 + Math.floor((state.round - 1) / 2) + (state.round >= 5 ? Math.ceil(state.finalLevel / 3) : 0));
+  state.directionSequence = Array.from({ length }, () => randomItem(Object.keys(DIRECTION_INFO)));
+  state.directionIndex = 0;
+  const game = document.createElement("div"); game.className = "direction-game";
+  const sequence = document.createElement("div"); sequence.className = "direction-sequence"; sequence.setAttribute("aria-label", "입력할 방향 순서");
+  state.directionSequence.forEach((direction, index) => {
+    const chip = document.createElement("span"); chip.className = "direction-chip"; chip.dataset.index = index; chip.textContent = DIRECTION_INFO[direction].symbol; chip.setAttribute("aria-label", DIRECTION_INFO[direction].label); sequence.appendChild(chip);
+  });
+  const pad = document.createElement("div"); pad.className = "direction-pad"; pad.setAttribute("aria-label", "방향 입력 버튼");
+  Object.entries(DIRECTION_INFO).forEach(([direction, info]) => {
+    const button = document.createElement("button"); button.type = "button"; button.className = "direction-key"; button.dataset.direction = direction; button.textContent = info.symbol; button.setAttribute("aria-label", info.label); button.addEventListener("click", () => handleDirectionInput(direction)); pad.appendChild(button);
+  });
+  game.append(sequence, pad); ui.playfield.appendChild(game); renderDirectionProgress();
+  startReactionTimer(directionLimitMs(), () => { if (!loseHeart()) renderDirection(); });
+}
+
 function showResults() {
   clearTimers();
   stopMusic(ui.gameMusic);
@@ -341,7 +407,7 @@ function showResults() {
   const average = (key) => Math.min(99, 50 + state.stats[key] * 8 + Math.floor(Math.random() * 12));
   ui.resultScore.textContent = String(state.score).padStart(4, "0");
   ui.resultCombo.textContent = `x${state.bestCombo}`;
-  ui.resultFocus.textContent = average("focus"); ui.resultMemory.textContent = average("memory"); ui.resultPattern.textContent = average("pattern");
+  ui.resultFocus.textContent = average("focus"); ui.resultMemory.textContent = average("memory"); ui.resultPattern.textContent = average("pattern"); ui.resultDirection.textContent = average("direction");
   ui.resultMessage.textContent = state.round >= 5 ? "마지막 라운드까지 도전했어요. 루미가 당신의 기록을 기억할게요." : "다음에는 더 멀리 도전해봐요. 루미가 기다리고 있을게요.";
   showScreen("result");
 }
@@ -382,7 +448,8 @@ function togglePause() {
   if (state.paused) clearTimers();
   else if (state.mode === "focus") renderFocus();
   else if (state.mode === "memory") renderMemory();
-  else renderPattern();
+  else if (state.mode === "pattern") renderPattern();
+  else renderDirection();
   ui.pause.textContent = state.paused ? "▶" : "Ⅱ";
   showToast(state.paused ? "잠시 멈췄어요." : "다시 시작할게요.");
 }
@@ -398,6 +465,6 @@ ui.modeCards.forEach((card) => {
   card.addEventListener("pointerenter", () => previewMode(card));
   card.addEventListener("pointerleave", () => { card.classList.remove("previewing"); setHomeLumiState(1); });
 });
-window.addEventListener("keydown", (event) => { if (event.key === "Escape" && ui.dialog.open) ui.dialog.close(); if (event.key === "p" && screens.game.classList.contains("active")) togglePause(); });
+window.addEventListener("keydown", (event) => { if (event.key === "Escape" && ui.dialog.open) ui.dialog.close(); if (event.key === "p" && screens.game.classList.contains("active")) togglePause(); if (screens.game.classList.contains("active") && state.mode === "direction" && event.key in DIRECTION_INFO) { event.preventDefault(); handleDirectionInput(event.key); } });
 
 ui.score.textContent = formatScore(0); renderHearts(); setMusicUi(false); startHomeMusic();

@@ -40,6 +40,11 @@
               <strong>패턴 모드</strong>
               <small>규칙을 찾아내기</small>
             </div>
+            <div class="mode-card mode-direction" data-lumi-state="4">
+              <span class="mode-icon direction-icon" aria-hidden="true">↕</span>
+              <strong>방향 모드</strong>
+              <small>순서 입력하기</small>
+            </div>
           </div>
           <div class="home-tip"><span class="tip-icon">✦</span><div><strong>오늘의 팁</strong><small>완벽보다 꾸준함이 더 중요해요!</small></div><span class="tip-arrow">›</span></div>
         </div>
@@ -85,7 +90,7 @@
             </div>
             <div id="playfield" class="playfield" aria-live="polite"></div>
             <div id="timer-panel" class="timer-panel is-hidden" aria-live="polite">
-              <div class="timer-copy"><span>순발력 챌린지</span><strong id="timer-label">5.0초</strong></div>
+              <div class="timer-copy"><span id="timer-title">순발력 챌린지</span><strong id="timer-label">5.0초</strong></div>
               <div class="timer-track"><span id="timer-bar"></span></div>
             </div>
             <div class="progress-caption"><span>◷</span><strong>목표 진행</strong><em id="round-progress-label">0%</em></div>
@@ -108,6 +113,7 @@
               <span><i class="target-icon" aria-hidden="true"></i>집중</span>
               <span><i class="memory-icon" aria-hidden="true">✦</i>기억</span>
               <span><i class="pattern-icon" aria-hidden="true">◇</i>패턴</span>
+              <span><i class="direction-icon" aria-hidden="true">↕</i>방향</span>
             </div>
             <div class="round-meter"><span id="round-meter-fill"></span></div>
           </aside>
@@ -129,6 +135,7 @@
             <div><span>집중력</span><strong id="result-focus">0</strong><small>우수</small></div>
             <div><span>기억력</span><strong id="result-memory">0</strong><small>양호</small></div>
             <div><span>패턴 인식</span><strong id="result-pattern">0</strong><small>최고</small></div>
+            <div><span>방향 감각</span><strong id="result-direction">0</strong><small>도전</small></div>
           </div>
           <div class="result-record"><span>✦</span><div><strong>도전 기록 저장 완료!</strong><small>최고 콤보 <b id="result-combo">x0</b> · 더 높은 목표를 향해 나아가요!</small></div></div>
           <div class="result-actions">
