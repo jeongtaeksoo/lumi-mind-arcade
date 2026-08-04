@@ -3,6 +3,7 @@ const screens = { home: $("#home-screen"), game: $("#game-screen"), result: $("#
 const ui = {
   start: $("#start-button"), retry: $("#retry-button"), home: $("#home-button"), pause: $("#pause-button"),
   howTo: $("#how-to-button"), dialogStart: $("#dialog-start-button"), dialog: $("#how-to-dialog"), closeDialog: $("#close-how-to"),
+  homeWorld: $(".home-world"), homeLumi: $("#home-lumi"), modeCards: [...document.querySelectorAll(".mode-card[data-lumi-state]")],
   playfield: $("#playfield"), round: $("#round-label"), title: $("#game-status-title"), score: $("#score-label"), hearts: $("#hearts"),
   instruction: $("#instruction-label"), combo: $("#combo-label"), progress: $("#progress-bar"), hint: $("#hint-text"),
   gameLumi: $("#game-lumi"), speechTitle: $("#speech-title"), speechText: $("#speech-text"), meter: $("#round-meter-fill"),
@@ -69,7 +70,33 @@ function beginRound() {
   if (mode === "pattern") renderPattern();
 }
 
+function setHomeLumiState(index) { ui.homeLumi.className = `lumi-sprite lumi-home state-${index}`; }
 function setLumiState(index) { ui.gameLumi.className = `lumi-sprite lumi-game state-${index}`; }
+function wakeHomeLumi(message = "루미가 깨어났어요. 게임을 시작해볼까요?") {
+  setHomeLumiState(2);
+  void ui.homeLumi.offsetWidth;
+  ui.homeLumi.classList.add("home-awake");
+  setTimeout(() => ui.homeLumi.classList.remove("home-awake"), 820);
+  showToast(message);
+}
+function previewMode(card) {
+  ui.modeCards.forEach((item) => item.classList.toggle("previewing", item === card));
+  setHomeLumiState(Number(card.dataset.lumiState));
+}
+function updateHomeParallax(event) {
+  const rect = screens.home.getBoundingClientRect();
+  const x = (event.clientX - rect.left) / rect.width - 0.5;
+  const y = (event.clientY - rect.top) / rect.height - 0.5;
+  ui.homeWorld.style.setProperty("--lumi-pointer-x", `${x * 18}px`);
+  ui.homeWorld.style.setProperty("--lumi-pointer-y", `${y * 14}px`);
+  ui.homeWorld.style.setProperty("--portal-x", `${x * 10}px`);
+  ui.homeWorld.style.setProperty("--portal-y", `${y * 8}px`);
+  ui.homeWorld.style.setProperty("--platform-x", `${x * 6}px`);
+  ui.homeWorld.style.setProperty("--platform-y", `${y * 4}px`);
+}
+function resetHomeParallax() {
+  ["--lumi-pointer-x", "--lumi-pointer-y", "--portal-x", "--portal-y", "--platform-x", "--platform-y"].forEach((name) => ui.homeWorld.style.setProperty(name, "0px"));
+}
 function reactLumi(kind) {
   const reaction = `react-${kind}`;
   ui.gameLumi.classList.remove("react-success", "react-mistake");
@@ -276,6 +303,12 @@ function togglePause() {
 ui.start.addEventListener("click", startGame); ui.retry.addEventListener("click", startGame); ui.dialogStart.addEventListener("click", () => { ui.dialog.close(); startGame(); });
 ui.home.addEventListener("click", () => { clearTimers(); showScreen("home"); }); ui.pause.addEventListener("click", togglePause); ui.share.addEventListener("click", shareResult);
 ui.howTo.addEventListener("click", () => ui.dialog.showModal()); ui.closeDialog.addEventListener("click", () => ui.dialog.close());
+screens.home.addEventListener("pointermove", updateHomeParallax); screens.home.addEventListener("pointerleave", resetHomeParallax);
+ui.homeLumi.addEventListener("click", () => wakeHomeLumi()); ui.homeLumi.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); wakeHomeLumi(); } });
+ui.modeCards.forEach((card) => {
+  card.addEventListener("pointerenter", () => previewMode(card)); card.addEventListener("focus", () => previewMode(card));
+  card.addEventListener("click", () => wakeHomeLumi(`${card.dataset.modeLabel} 모드를 미리봤어요.`));
+});
 window.addEventListener("keydown", (event) => { if (event.key === "Escape" && ui.dialog.open) ui.dialog.close(); if (event.key === "p" && screens.game.classList.contains("active")) togglePause(); });
 
 ui.score.textContent = formatScore(0); renderHearts();

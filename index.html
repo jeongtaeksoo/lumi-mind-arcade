@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#060a2a" />
     <meta name="description" content="실수를 기억하는 3분 웹 아케이드, LUMI'S MIND ARCADE" />
     <title>LUMI'S MIND ARCADE</title>
-    <link rel="stylesheet" href="./styles.css?v=5" />
+    <link rel="stylesheet" href="./styles.css?v=6" />
   </head>
   <body>
     <main class="app-shell">
@@ -22,19 +22,20 @@
           <p class="home-tagline">실수를 기억하는 3분 아케이드</p>
           <button id="start-button" class="primary-button" type="button">게임 시작</button>
           <button id="how-to-button" class="secondary-button" type="button">플레이 방법</button>
+          <p class="home-interaction-hint"><span aria-hidden="true">✦</span> 포인터를 움직여 루미를 깨워보세요</p>
 
           <div class="mode-row" aria-label="미니게임 종류">
-            <div class="mode-card mode-focus">
+            <div class="mode-card mode-focus" data-lumi-state="2" data-mode-label="집중력" role="button" tabindex="0" aria-label="집중력 미리보기">
               <span class="mode-icon target-icon" aria-hidden="true"></span>
               <strong>집중력</strong>
               <small>목표를 찾아요</small>
             </div>
-            <div class="mode-card mode-memory">
+            <div class="mode-card mode-memory" data-lumi-state="1" data-mode-label="기억력" role="button" tabindex="0" aria-label="기억력 미리보기">
               <span class="mode-icon memory-icon" aria-hidden="true">✦</span>
               <strong>기억력</strong>
               <small>순서를 기억해요</small>
             </div>
-            <div class="mode-card mode-pattern">
+            <div class="mode-card mode-pattern" data-lumi-state="3" data-mode-label="패턴 찾기" role="button" tabindex="0" aria-label="패턴 찾기 미리보기">
               <span class="mode-icon pattern-icon" aria-hidden="true">◇</span>
               <strong>패턴 찾기</strong>
               <small>다른 타일을 찾아요</small>
@@ -42,13 +43,13 @@
           </div>
         </div>
 
-        <div class="home-world" aria-hidden="true">
+        <div class="home-world" aria-label="루미의 별빛 공간">
           <div class="portal portal-large"></div>
           <div class="crystal crystal-a"></div>
           <div class="crystal crystal-b"></div>
           <div class="crystal crystal-c"></div>
           <div class="platform platform-home"></div>
-          <div class="lumi-sprite lumi-home state-1"></div>
+          <div id="home-lumi" class="lumi-sprite lumi-home state-1" role="button" tabindex="0" aria-label="루미를 깨워요"></div>
           <div class="orbital-line orbital-one"></div>
           <div class="orbital-line orbital-two"></div>
         </div>
