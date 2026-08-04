@@ -24,6 +24,7 @@ const state = {
   finalLevel: 1, stageIndex: 0, roundPlan: [], stageLocked: false, roundTimer: null, memoryTimer: null, timerInterval: null,
   paused: false, stats: { focus: 0, memory: 0, pattern: 0 }
 };
+let musicEnabled = true;
 
 function showScreen(name) { Object.values(screens).forEach((screen) => screen.classList.remove("active")); screens[name].classList.add("active"); window.scrollTo(0, 0); requestAnimationFrame(() => window.scrollTo(0, 0)); setTimeout(() => window.scrollTo(0, 0), 40); }
 function randomItem(list) { return list[Math.floor(Math.random() * list.length)]; }
@@ -352,19 +353,21 @@ function setMusicUi(isPlaying) {
   ui.musicToggle.classList.toggle("is-playing", isPlaying);
 }
 function startHomeMusic() {
+  if (!musicEnabled) return;
   ui.homeMusic.volume = 0.28;
   const playRequest = ui.homeMusic.play();
   if (playRequest && typeof playRequest.then === "function") playRequest.then(() => setMusicUi(true)).catch(() => setMusicUi(false));
 }
 function startGameMusic() {
+  if (!musicEnabled) return;
   ui.gameMusic.volume = 0.24;
   const playRequest = ui.gameMusic.play();
   if (playRequest && typeof playRequest.then === "function") playRequest.catch(() => {});
 }
 function stopMusic(audio) { audio.pause(); audio.currentTime = 0; }
 function toggleMusic() {
-  if (ui.homeMusic.paused) startHomeMusic();
-  else { ui.homeMusic.pause(); setMusicUi(false); }
+  if (ui.homeMusic.paused) { musicEnabled = true; startHomeMusic(); }
+  else { musicEnabled = false; ui.homeMusic.pause(); ui.gameMusic.pause(); setMusicUi(false); }
 }
 function togglePause() {
   state.paused = !state.paused;
@@ -389,4 +392,4 @@ ui.modeCards.forEach((card) => {
 });
 window.addEventListener("keydown", (event) => { if (event.key === "Escape" && ui.dialog.open) ui.dialog.close(); if (event.key === "p" && screens.game.classList.contains("active")) togglePause(); });
 
-ui.score.textContent = formatScore(0); renderHearts();
+ui.score.textContent = formatScore(0); renderHearts(); setMusicUi(false); startHomeMusic();

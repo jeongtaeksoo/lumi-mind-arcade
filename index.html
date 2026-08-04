@@ -24,8 +24,6 @@
           <p class="home-support">두뇌를 깨우는 3가지 모드</p>
           <button id="start-button" class="primary-button" type="button"><span class="button-play" aria-hidden="true">▶</span>게임 시작</button>
           <button id="how-to-button" class="secondary-button" type="button">플레이 방법</button>
-          <p class="home-interaction-hint"><span aria-hidden="true">✦</span> 포인터를 움직여 루미를 깨워보세요</p>
-
           <div class="mode-row" aria-label="미니게임 종류">
             <div class="mode-card mode-focus" data-lumi-state="2">
               <span class="mode-icon target-icon" aria-hidden="true"></span>
@@ -48,9 +46,6 @@
 
         <div class="home-world" aria-label="루미의 별빛 공간">
           <div class="portal portal-large"></div>
-          <div class="crystal crystal-a"></div>
-          <div class="crystal crystal-b"></div>
-          <div class="crystal crystal-c"></div>
           <div class="lumi-ground-glow" aria-hidden="true"></div>
           <div id="home-lumi" class="lumi-sprite lumi-home state-1" role="button" tabindex="0" aria-label="루미를 깨워요"></div>
           <div class="orbital-line orbital-one"></div>
@@ -160,7 +155,7 @@
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <audio id="home-bgm" src="./public/assets/velvet-tide.mp3?v=1" loop preload="auto" aria-hidden="true"></audio>
+    <audio id="home-bgm" src="./public/assets/velvet-tide.mp3?v=1" loop autoplay preload="auto" aria-hidden="true"></audio>
     <audio id="game-bgm" src="./public/assets/origami-pavements.mp3?v=1" loop preload="auto" aria-hidden="true"></audio>
     <script src="./app.js?v=12"></script>
   </body>
