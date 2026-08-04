@@ -70,6 +70,13 @@ function beginRound() {
 }
 
 function setLumiState(index) { ui.gameLumi.className = `lumi-sprite lumi-game state-${index}`; }
+function reactLumi(kind) {
+  const reaction = `react-${kind}`;
+  ui.gameLumi.classList.remove("react-success", "react-mistake");
+  void ui.gameLumi.offsetWidth;
+  ui.gameLumi.classList.add(reaction);
+  setTimeout(() => ui.gameLumi.classList.remove(reaction), kind === "success" ? 680 : 540);
+}
 function setSpeechForRound() {
   if (state.round >= 5) {
     setSpeech("마지막 도전!", `최종 단계 ${state.finalLevel} · 하트가 모두 사라질 때까지 버텨요!`);
@@ -97,6 +104,7 @@ function loseHeart() {
   state.hearts -= 1;
   state.combo = 0;
   renderHearts(Math.max(0, state.hearts));
+  reactLumi("mistake");
   ui.combo.textContent = "콤보 x0";
   setSpeech("괜찮아요!", "다음 기회를 잡아봐요.");
   if (state.hearts <= 0) {
@@ -110,6 +118,7 @@ function reward(points) {
   state.score += points + state.combo * 5;
   state.combo += 1;
   state.bestCombo = Math.max(state.bestCombo, state.combo);
+  reactLumi("success");
   ui.score.textContent = formatScore(state.score);
   ui.combo.textContent = `콤보 x${state.combo}`;
 }
