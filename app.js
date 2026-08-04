@@ -10,7 +10,7 @@ const ui = {
   timerPanel: $("#timer-panel"), timerLabel: $("#timer-label"), timerBar: $("#timer-bar"),
   gameLumi: $("#game-lumi"), speechTitle: $("#speech-title"), speechText: $("#speech-text"), meter: $("#round-meter-fill"),
   resultScore: $("#result-score"), resultCombo: $("#result-combo"), resultFocus: $("#result-focus"), resultMemory: $("#result-memory"), resultPattern: $("#result-pattern"),
-  resultMessage: $("#result-message"), resultHome: $("#result-home-button"), progressLabel: $("#round-progress-label"), shortcuts: [...document.querySelectorAll(".shortcut-card")], share: $("#share-button"), toast: $("#toast")
+  resultMessage: $("#result-message"), resultHome: $("#result-home-button"), progressLabel: $("#round-progress-label"), share: $("#share-button"), toast: $("#toast")
 };
 
 const MODE_INFO = {
@@ -359,7 +359,6 @@ ui.modeCards.forEach((card) => {
   card.addEventListener("pointerenter", () => previewMode(card)); card.addEventListener("focus", () => previewMode(card));
   card.addEventListener("click", () => wakeHomeLumi(`${card.dataset.modeLabel} 모드를 미리봤어요.`));
 });
-ui.shortcuts.forEach((shortcut) => shortcut.addEventListener("click", () => showToast(shortcut.dataset.toast)));
 window.addEventListener("keydown", (event) => { if (event.key === "Escape" && ui.dialog.open) ui.dialog.close(); if (event.key === "p" && screens.game.classList.contains("active")) togglePause(); });
 
 ui.score.textContent = formatScore(0); renderHearts();

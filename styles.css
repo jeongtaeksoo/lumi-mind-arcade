@@ -99,8 +99,13 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
 
 .lumi-sprite { background-image: url("./public/assets/lumi-sprite-sheet.png?v=5"); background-size: 500% 100%; background-repeat: no-repeat; background-color: transparent; will-change: transform; }
 .state-0 { background-position: 0% center; }.state-1 { background-position: 25% center; }.state-2 { background-position: 50% center; }.state-3 { background-position: 75% center; }.state-4 { background-position: 100% center; }
-.lumi-home { position: absolute; width: min(24vw, 330px); height: min(35vw, 480px); right: 17%; bottom: 12%; background-color: transparent; background-size: 500% 100%; filter: drop-shadow(0 16px 26px rgba(21, 20, 93, .7)); animation: lumi-home-float 5.2s ease-in-out infinite; cursor: pointer; }
-@keyframes lumi-home-float { 0%, 100% { transform: translate3d(var(--lumi-pointer-x, 0px), var(--lumi-pointer-y, 0px), 0) rotate(-1deg); } 50% { transform: translate3d(var(--lumi-pointer-x, 0px), calc(var(--lumi-pointer-y, 0px) - 10px), 0) rotate(1.2deg); } }
+.lumi-home { position: absolute; width: min(24vw, 330px); height: min(35vw, 480px); right: 17%; bottom: 12%; background-color: transparent; background-size: 500% 100%; filter: drop-shadow(0 16px 26px rgba(21, 20, 93, .7)); animation: lumi-home-run 2.8s ease-in-out infinite; cursor: pointer; }
+@keyframes lumi-home-run {
+  0%, 100% { transform: translate3d(calc(var(--lumi-pointer-x, 0px) - 16px), var(--lumi-pointer-y, 0px), 0) rotate(-4deg) scaleX(.97); }
+  25% { transform: translate3d(calc(var(--lumi-pointer-x, 0px) + 4px), calc(var(--lumi-pointer-y, 0px) - 13px), 0) rotate(3deg) scaleX(1.02); }
+  50% { transform: translate3d(calc(var(--lumi-pointer-x, 0px) + 18px), var(--lumi-pointer-y, 0px), 0) rotate(-2deg) scaleX(.98); }
+  75% { transform: translate3d(calc(var(--lumi-pointer-x, 0px) - 2px), calc(var(--lumi-pointer-y, 0px) - 10px), 0) rotate(4deg) scaleX(1.03); }
+}
 @keyframes lumi-home-awake { 0% { transform: translate3d(var(--lumi-pointer-x, 0px), var(--lumi-pointer-y, 0px), 0) scale(1); } 35% { transform: translate3d(var(--lumi-pointer-x, 0px), calc(var(--lumi-pointer-y, 0px) - 24px), 0) scale(1.06) rotate(-3deg); } 70% { transform: translate3d(var(--lumi-pointer-x, 0px), calc(var(--lumi-pointer-y, 0px) - 10px), 0) scale(1.02) rotate(2deg); } 100% { transform: translate3d(var(--lumi-pointer-x, 0px), var(--lumi-pointer-y, 0px), 0) scale(1); } }
 .lumi-home.home-awake { animation: lumi-home-awake 800ms cubic-bezier(.2,.8,.2,1); }
 
@@ -163,11 +168,6 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
 .mode-card strong { font-size: 14px; }
 .mode-card small { margin-top: 4px; font-size: 11px; }
 .mode-icon { width: 34px; height: 34px; }
-.home-shortcuts { display: flex; gap: 9px; width: min(100%, 430px); margin-top: 10px; }
-.shortcut-card { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 8px 9px; border: 1px solid rgba(132, 155, 244, .32); border-radius: 14px; background: rgba(9, 19, 62, .72); color: var(--text); cursor: pointer; transition: transform var(--ease), border-color var(--ease), background var(--ease); }
-.shortcut-card:hover, .shortcut-card:focus-visible { transform: translateY(-3px); border-color: rgba(150, 246, 233, .65); background: rgba(23, 35, 92, .88); }
-.shortcut-icon { color: #f6f7ff; font-size: 20px; line-height: 1; }
-.shortcut-card strong { color: #dbe4ff; font-size: 11px; white-space: nowrap; }
 .home-tip { position: absolute; left: clamp(28px, 6vw, 82px); bottom: 18px; display: flex; align-items: center; gap: 10px; width: min(100%, 430px); margin: 0; padding: 10px 13px; border: 1px solid rgba(95, 126, 255, .34); border-radius: 15px; background: rgba(5, 13, 45, .62); }
 .tip-icon { color: var(--gold); font-size: 20px; }
 .home-tip div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -256,10 +256,8 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
   .home-copy { height: auto; padding-top: 72px; padding-bottom: 380px; }
   .home-tagline { font-size: 29px; }
   .home-support { font-size: 14px; }
-  .home-shortcuts, .home-tip { width: 100%; }
+  .home-tip { width: 100%; }
   .home-tip { position: static; margin-top: 16px; }
-  .shortcut-card { padding-left: 4px; padding-right: 4px; }
-  .shortcut-card strong { font-size: 10px; }
   .home-world { height: 350px; }
   .lumi-home { width: 175px; height: 245px; right: 13%; bottom: 8%; }
   .game-header { grid-template-columns: 38px 100px minmax(0, 1fr) 38px; grid-template-rows: 36px 22px; width: calc(100% - 16px); padding: 7px; }

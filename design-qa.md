@@ -16,7 +16,7 @@
 
 ## State and interaction coverage
 
-- Home screen with Korean copy, three mode cards, shortcut cards, daily tip, and mascot.
+- Home screen with Korean copy, three mode cards, daily tip, and mascot.
 - Round screen with round/mode/score/heart HUD, interactive playfield, partner rail, progress bar, and heart loss behavior.
 - Completion screen with final score, three cognitive metrics, saved-record banner, retry/share actions, and return-to-home action.
 - Mobile home and round layouts checked at 390 × 844.
@@ -32,7 +32,7 @@
 
 ### Fixes applied
 
-- Rebuilt the home information hierarchy around “마음의 퍼즐, 집중의 즐거움”, three mode cards, three shortcut cards, and the tip bar.
+- Rebuilt the home information hierarchy around “마음의 퍼즐, 집중의 즐거움”, three mode cards, and the tip bar.
 - Added the source-style HUD mode block, progress caption, “나의 파트너” rail, and compact focus/memory/pattern indicators.
 - Reworked completion copy, three metric cards, record banner, action labels, and main-return button.
 - Replaced the mascot sprite with the original five-state crystal mascot asset and aligned its scale/position by state.
@@ -59,3 +59,4 @@ passed
 - Verified desktop at 1440 × 900 and mobile at 390 × 844.
 - Browser console logs: empty after the tested flows.
 - Memory mode cards are vertically and horizontally centered inside the playfield on desktop and mobile.
+- Removed the low-priority home shortcut row and added a light running-in-place motion to the home mascot.
