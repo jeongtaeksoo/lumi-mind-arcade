@@ -294,7 +294,7 @@ function renderMemory() {
     cards.forEach((card) => { card.classList.remove("revealed"); card.disabled = false; });
     cards.forEach((card) => card.addEventListener("click", () => {
       if (state.paused) return;
-      if (Number(card.dataset.index) !== current) {
+      if (Number(card.dataset.index) !== revealOrder[current]) {
         card.classList.add("wrong");
         if (!loseHeart()) setTimeout(renderMemory, 380);
         return;

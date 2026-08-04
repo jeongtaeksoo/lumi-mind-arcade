@@ -66,3 +66,5 @@ passed
 - Verified dual music routing: `Velvet_Tide.mp3` on home, `Origami_Pavements.mp3` during gameplay, and clean switching when returning home.
 - Removed the home-world crystal rectangles so the mascot and orbital backdrop remain the visual focus.
 - Refined the gameplay HUD into grouped information chips and verified default music playback with an autoplay fallback.
+- Fixed memory-mode validation to compare clicks against the randomized reveal order; verified a non-linear sequence clears with all five hearts intact.
+- Let wide-screen playfields expand vertically to remove the large lower dead zone, and added generated primary/secondary button frames with HTML text overlays.

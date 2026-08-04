@@ -20,6 +20,8 @@
 - 게임 플레이: `Origami_Pavements.mp3`
 - 기본 재생을 시도하며, 브라우저가 자동재생을 막으면 첫 화면 상호작용 후 재생됩니다. 메인 화면의 음악 버튼으로 켜고 끌 수 있습니다.
 
+버튼 프레임은 `public/assets/lumi-button-frame.png`와 `public/assets/lumi-button-frame-secondary.png`를 사용하며, 한국어 라벨은 웹 UI에서 별도로 표시해 가독성을 유지합니다.
+
 ## 실행
 
 별도 빌드 도구 없이 `index.html`을 정적 호스팅하면 됩니다.
