@@ -69,3 +69,4 @@ passed
 - Fixed memory-mode validation to compare clicks against the randomized reveal order; verified a non-linear sequence clears with all five hearts intact.
 - Decoupled memory-card layout order from reveal order so every round presents a different spatial sequence, not a left-to-right playback.
 - Let wide-screen playfields expand vertically to remove the large lower dead zone, and added generated primary/secondary button frames with HTML text overlays.
+- Constrained pattern boards by calculated row/column ratio so every tile stays inside the playfield, and strengthened the single odd tile with a gold glow and marker.

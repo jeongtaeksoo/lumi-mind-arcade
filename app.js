@@ -311,8 +311,15 @@ function renderPattern() {
   hideReactionTimer();
   ui.playfield.innerHTML = "";
   const size = state.round >= 5 ? Math.min(8, 5 + Math.ceil(state.finalLevel / 2)) : 4 + Math.ceil(state.round / 2);
-  const board = document.createElement("div"); board.className = "pattern-board"; board.style.gridTemplateColumns = `repeat(${Math.min(size, 7)}, minmax(32px, 1fr))`; ui.playfield.appendChild(board);
-  const count = size * Math.min(size, 7); const oddIndex = Math.floor(Math.random() * count);
+  const columns = Math.min(size, 7);
+  const count = size * columns;
+  const rows = Math.ceil(count / columns);
+  const oddIndex = Math.floor(Math.random() * count);
+  const board = document.createElement("div");
+  board.className = "pattern-board";
+  board.style.setProperty("--pattern-columns", columns);
+  board.style.setProperty("--pattern-rows", rows);
+  ui.playfield.appendChild(board);
   for (let index = 0; index < count; index += 1) {
     const tile = document.createElement("button"); tile.type = "button"; tile.className = `pattern-tile ${index === oddIndex ? "odd" : ""}`; tile.setAttribute("aria-label", "패턴 타일");
     tile.addEventListener("click", () => {
