@@ -62,3 +62,4 @@ passed
 - Removed the low-priority home shortcut row and added a light running-in-place motion to the home mascot.
 - Memory reveal order now randomizes card positions instead of always revealing left-to-right; correct input still advances the stage.
 - Focus mode randomizes target/decoy positions with an active round timer; pattern mode keeps one randomly placed odd tile on the board.
+- Removed the oversized home platform and kept only a subtle ground glow beneath the running mascot.
