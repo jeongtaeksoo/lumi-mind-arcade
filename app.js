@@ -8,13 +8,13 @@ const ui = {
   instruction: $("#instruction-label"), combo: $("#combo-label"), progress: $("#progress-bar"), hint: $("#hint-text"),
   gameLumi: $("#game-lumi"), speechTitle: $("#speech-title"), speechText: $("#speech-text"), meter: $("#round-meter-fill"),
   resultScore: $("#result-score"), resultCombo: $("#result-combo"), resultFocus: $("#result-focus"), resultMemory: $("#result-memory"), resultPattern: $("#result-pattern"),
-  resultMessage: $("#result-message"), share: $("#share-button"), toast: $("#toast")
+  resultMessage: $("#result-message"), resultHome: $("#result-home-button"), progressLabel: $("#round-progress-label"), shortcuts: [...document.querySelectorAll(".shortcut-card")], share: $("#share-button"), toast: $("#toast")
 };
 
 const MODE_INFO = {
-  focus: { label: "집중력", instruction: "목표를 클릭하세요" },
-  memory: { label: "기억력", instruction: "빛난 순서대로 눌러보세요" },
-  pattern: { label: "패턴 찾기", instruction: "달라진 패턴을 찾아보세요" }
+  focus: { label: "집중 모드", instruction: "목표를 클릭하세요" },
+  memory: { label: "기억 모드", instruction: "빛난 순서대로 눌러보세요" },
+  pattern: { label: "패턴 모드", instruction: "달라진 패턴을 찾아보세요" }
 };
 
 const state = {
@@ -61,6 +61,7 @@ function beginRound() {
   ui.title.textContent = MODE_INFO[mode].label;
   ui.instruction.textContent = MODE_INFO[mode].instruction;
   ui.progress.style.width = "0%";
+  ui.progressLabel.textContent = "0%";
   ui.meter.style.width = `${Math.min(100, state.round * 20)}%`;
   setLumiState(Math.min(4, state.round - 1));
   setSpeechForRound();
@@ -176,6 +177,7 @@ function completeChallenge(points) {
   state.roundProgress += 1;
   const goal = roundGoal();
   ui.progress.style.width = `${Math.min(100, (state.roundProgress / goal) * 100)}%`;
+  ui.progressLabel.textContent = `${Math.round(Math.min(100, (state.roundProgress / goal) * 100))}%`;
   if (state.round >= 5) {
     ui.progress.style.width = `${Math.min(94, 20 + state.finalLevel * 12)}%`;
     setTimeout(() => { if (state.hearts > 0) advanceRound(); }, 210);
@@ -301,7 +303,7 @@ function togglePause() {
 }
 
 ui.start.addEventListener("click", startGame); ui.retry.addEventListener("click", startGame); ui.dialogStart.addEventListener("click", () => { ui.dialog.close(); startGame(); });
-ui.home.addEventListener("click", () => { clearTimers(); showScreen("home"); }); ui.pause.addEventListener("click", togglePause); ui.share.addEventListener("click", shareResult);
+ui.home.addEventListener("click", () => { clearTimers(); showScreen("home"); }); ui.resultHome.addEventListener("click", () => { clearTimers(); showScreen("home"); }); ui.pause.addEventListener("click", togglePause); ui.share.addEventListener("click", shareResult);
 ui.howTo.addEventListener("click", () => ui.dialog.showModal()); ui.closeDialog.addEventListener("click", () => ui.dialog.close());
 screens.home.addEventListener("pointermove", updateHomeParallax); screens.home.addEventListener("pointerleave", resetHomeParallax);
 ui.homeLumi.addEventListener("click", () => wakeHomeLumi()); ui.homeLumi.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); wakeHomeLumi(); } });
@@ -309,6 +311,7 @@ ui.modeCards.forEach((card) => {
   card.addEventListener("pointerenter", () => previewMode(card)); card.addEventListener("focus", () => previewMode(card));
   card.addEventListener("click", () => wakeHomeLumi(`${card.dataset.modeLabel} 모드를 미리봤어요.`));
 });
+ui.shortcuts.forEach((shortcut) => shortcut.addEventListener("click", () => showToast(shortcut.dataset.toast)));
 window.addEventListener("keydown", (event) => { if (event.key === "Escape" && ui.dialog.open) ui.dialog.close(); if (event.key === "p" && screens.game.classList.contains("active")) togglePause(); });
 
 ui.score.textContent = formatScore(0); renderHearts();
