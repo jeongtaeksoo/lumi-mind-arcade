@@ -10,7 +10,7 @@ const ui = {
   timerPanel: $("#timer-panel"), timerLabel: $("#timer-label"), timerBar: $("#timer-bar"),
   gameLumi: $("#game-lumi"), speechTitle: $("#speech-title"), speechText: $("#speech-text"), meter: $("#round-meter-fill"),
   resultScore: $("#result-score"), resultCombo: $("#result-combo"), resultFocus: $("#result-focus"), resultMemory: $("#result-memory"), resultPattern: $("#result-pattern"),
-  resultMessage: $("#result-message"), resultHome: $("#result-home-button"), progressLabel: $("#round-progress-label"), share: $("#share-button"), toast: $("#toast")
+  resultMessage: $("#result-message"), resultHome: $("#result-home-button"), progressLabel: $("#round-progress-label"), share: $("#share-button"), toast: $("#toast"), homeMusic: $("#home-bgm"), gameMusic: $("#game-bgm"), musicToggle: $("#music-toggle")
 };
 
 const MODE_INFO = {
@@ -38,6 +38,8 @@ function resetState() {
 
 function startGame() {
   resetState();
+  stopMusic(ui.homeMusic);
+  startGameMusic();
   showScreen("game");
   beginRound();
 }
@@ -325,6 +327,7 @@ function renderPattern() {
 
 function showResults() {
   clearTimers();
+  stopMusic(ui.gameMusic);
   hideReactionTimer();
   const average = (key) => Math.min(99, 50 + state.stats[key] * 8 + Math.floor(Math.random() * 12));
   ui.resultScore.textContent = String(state.score).padStart(4, "0");
@@ -342,6 +345,27 @@ function shareResult() {
 }
 
 function showToast(message) { ui.toast.textContent = message; ui.toast.classList.add("visible"); setTimeout(() => ui.toast.classList.remove("visible"), 2200); }
+function setMusicUi(isPlaying) {
+  ui.musicToggle.setAttribute("aria-pressed", String(isPlaying));
+  ui.musicToggle.setAttribute("aria-label", isPlaying ? "배경음악 끄기" : "배경음악 켜기");
+  ui.musicToggle.textContent = isPlaying ? "♫ 음악 끄기" : "♫ 음악 켜기";
+  ui.musicToggle.classList.toggle("is-playing", isPlaying);
+}
+function startHomeMusic() {
+  ui.homeMusic.volume = 0.28;
+  const playRequest = ui.homeMusic.play();
+  if (playRequest && typeof playRequest.then === "function") playRequest.then(() => setMusicUi(true)).catch(() => setMusicUi(false));
+}
+function startGameMusic() {
+  ui.gameMusic.volume = 0.24;
+  const playRequest = ui.gameMusic.play();
+  if (playRequest && typeof playRequest.then === "function") playRequest.catch(() => {});
+}
+function stopMusic(audio) { audio.pause(); audio.currentTime = 0; }
+function toggleMusic() {
+  if (ui.homeMusic.paused) startHomeMusic();
+  else { ui.homeMusic.pause(); setMusicUi(false); }
+}
 function togglePause() {
   state.paused = !state.paused;
   if (state.paused) clearTimers();
@@ -353,7 +377,9 @@ function togglePause() {
 }
 
 ui.start.addEventListener("click", startGame); ui.retry.addEventListener("click", startGame); ui.dialogStart.addEventListener("click", () => { ui.dialog.close(); startGame(); });
-ui.home.addEventListener("click", () => { clearTimers(); showScreen("home"); }); ui.resultHome.addEventListener("click", () => { clearTimers(); showScreen("home"); }); ui.pause.addEventListener("click", togglePause); ui.share.addEventListener("click", shareResult);
+ui.home.addEventListener("click", () => { clearTimers(); stopMusic(ui.gameMusic); showScreen("home"); startHomeMusic(); }); ui.resultHome.addEventListener("click", () => { clearTimers(); stopMusic(ui.gameMusic); showScreen("home"); startHomeMusic(); }); ui.pause.addEventListener("click", togglePause); ui.share.addEventListener("click", shareResult);
+ui.musicToggle.addEventListener("click", toggleMusic);
+screens.home.addEventListener("pointerdown", (event) => { if (!event.target.closest("#music-toggle")) startHomeMusic(); });
 ui.howTo.addEventListener("click", () => ui.dialog.showModal()); ui.closeDialog.addEventListener("click", () => ui.dialog.close());
 screens.home.addEventListener("pointermove", updateHomeParallax); screens.home.addEventListener("pointerleave", resetHomeParallax);
 ui.homeLumi.addEventListener("click", () => wakeHomeLumi()); ui.homeLumi.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); wakeHomeLumi(); } });

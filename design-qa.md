@@ -63,3 +63,4 @@ passed
 - Memory reveal order now randomizes card positions instead of always revealing left-to-right; correct input still advances the stage.
 - Focus mode randomizes target/decoy positions with an active round timer; pattern mode keeps one randomly placed odd tile on the board.
 - Removed the oversized home platform and kept only a subtle ground glow beneath the running mascot.
+- Verified dual music routing: `Velvet_Tide.mp3` on home, `Origami_Pavements.mp3` during gameplay, and clean switching when returning home.

@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#060a2a" />
     <meta name="description" content="실수를 기억하는 3분 웹 아케이드, LUMI'S MIND ARCADE" />
     <title>LUMI'S MIND ARCADE</title>
-    <link rel="stylesheet" href="./styles.css?v=11" />
+    <link rel="stylesheet" href="./styles.css?v=12" />
   </head>
   <body>
     <main class="app-shell">
@@ -57,7 +57,10 @@
           <div class="orbital-line orbital-two"></div>
         </div>
 
-        <div class="home-badge"><span class="gem-dot"></span> 5라운드 도전</div>
+        <div class="home-controls">
+          <div class="home-badge"><span class="gem-dot"></span> 5라운드 도전</div>
+          <button id="music-toggle" class="music-toggle" type="button" aria-pressed="false" aria-label="배경음악 켜기">♫ 음악 켜기</button>
+        </div>
       </section>
 
       <section id="game-screen" class="screen" aria-labelledby="game-status-title">
@@ -157,6 +160,8 @@
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script src="./app.js?v=10"></script>
+    <audio id="home-bgm" src="./public/assets/velvet-tide.mp3?v=1" loop preload="auto" aria-hidden="true"></audio>
+    <audio id="game-bgm" src="./public/assets/origami-pavements.mp3?v=1" loop preload="auto" aria-hidden="true"></audio>
+    <script src="./app.js?v=12"></script>
   </body>
 </html>
