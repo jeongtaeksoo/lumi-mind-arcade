@@ -356,8 +356,8 @@ ui.howTo.addEventListener("click", () => ui.dialog.showModal()); ui.closeDialog.
 screens.home.addEventListener("pointermove", updateHomeParallax); screens.home.addEventListener("pointerleave", resetHomeParallax);
 ui.homeLumi.addEventListener("click", () => wakeHomeLumi()); ui.homeLumi.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); wakeHomeLumi(); } });
 ui.modeCards.forEach((card) => {
-  card.addEventListener("pointerenter", () => previewMode(card)); card.addEventListener("focus", () => previewMode(card));
-  card.addEventListener("click", () => wakeHomeLumi(`${card.dataset.modeLabel} 모드를 미리봤어요.`));
+  card.addEventListener("pointerenter", () => previewMode(card));
+  card.addEventListener("pointerleave", () => { card.classList.remove("previewing"); setHomeLumiState(1); });
 });
 window.addEventListener("keydown", (event) => { if (event.key === "Escape" && ui.dialog.open) ui.dialog.close(); if (event.key === "p" && screens.game.classList.contains("active")) togglePause(); });
 
