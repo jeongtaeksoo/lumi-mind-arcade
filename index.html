@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#060a2a" />
+    <meta name="description" content="실수를 기억하는 3분 웹 아케이드, LUMI'S MIND ARCADE" />
+    <title>LUMI'S MIND ARCADE</title>
+    <link rel="stylesheet" href="./styles.css?v=4" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <div class="stars stars-one" aria-hidden="true"></div>
+      <div class="stars stars-two" aria-hidden="true"></div>
+
+      <section id="home-screen" class="screen active" aria-labelledby="game-title">
+        <div class="home-copy">
+          <div class="brand-lockup">
+            <span class="brand-word">LUMI’S</span>
+            <span class="brand-subword">MIND ARCADE</span>
+          </div>
+          <p class="home-tagline">실수를 기억하는 3분 아케이드</p>
+          <button id="start-button" class="primary-button" type="button">게임 시작</button>
+          <button id="how-to-button" class="secondary-button" type="button">플레이 방법</button>
+
+          <div class="mode-row" aria-label="미니게임 종류">
+            <div class="mode-card mode-focus">
+              <span class="mode-icon target-icon" aria-hidden="true"></span>
+              <strong>집중력</strong>
+              <small>목표를 찾아요</small>
+            </div>
+            <div class="mode-card mode-memory">
+              <span class="mode-icon memory-icon" aria-hidden="true">✦</span>
+              <strong>기억력</strong>
+              <small>순서를 기억해요</small>
+            </div>
+            <div class="mode-card mode-pattern">
+              <span class="mode-icon pattern-icon" aria-hidden="true">◇</span>
+              <strong>패턴 찾기</strong>
+              <small>다른 타일을 찾아요</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="home-world" aria-hidden="true">
+          <div class="portal portal-large"></div>
+          <div class="crystal crystal-a"></div>
+          <div class="crystal crystal-b"></div>
+          <div class="crystal crystal-c"></div>
+          <div class="platform platform-home"></div>
+          <div class="lumi-sprite lumi-home state-1"></div>
+          <div class="orbital-line orbital-one"></div>
+          <div class="orbital-line orbital-two"></div>
+        </div>
+
+        <div class="home-badge"><span class="gem-dot"></span> 5라운드 도전</div>
+      </section>
+
+      <section id="game-screen" class="screen" aria-labelledby="game-status-title">
+        <header class="game-header">
+          <button id="home-button" class="icon-button" type="button" aria-label="홈으로 돌아가기">⌂</button>
+          <div class="mini-brand">LUMI’S <span>MIND ARCADE</span></div>
+          <div class="round-status">
+            <span id="round-label">ROUND 1 / 5</span>
+            <strong id="game-status-title">집중력</strong>
+          </div>
+          <div class="score-status"><span>점수</span><strong id="score-label">000</strong></div>
+          <div id="hearts" class="hearts" aria-label="남은 하트 5개"></div>
+          <button id="pause-button" class="icon-button" type="button" aria-label="일시정지">Ⅱ</button>
+        </header>
+
+        <div class="game-layout">
+          <section class="playfield-panel">
+            <div class="instruction-row">
+              <p id="instruction-label">목표를 클릭하세요</p>
+              <span id="combo-label" class="combo-label">콤보 x0</span>
+            </div>
+            <div id="playfield" class="playfield" aria-live="polite"></div>
+            <div class="progress-track"><span id="progress-bar" class="progress-bar"></span></div>
+            <div class="round-hint"><span class="hint-star">✦</span><span id="hint-text">실수하면 하트가 하나 줄어요.</span></div>
+          </section>
+
+          <aside class="companion-panel">
+            <div class="companion-title"><span class="companion-gem"></span><span>루미</span></div>
+            <div id="game-lumi" class="lumi-sprite lumi-game state-0" role="img" aria-label="루미"></div>
+            <div class="speech-bubble"><strong id="speech-title">준비됐나요?</strong><span id="speech-text">천천히 시작해봐요.</span></div>
+            <div class="round-meter"><span id="round-meter-fill"></span></div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="result-screen" class="screen" aria-labelledby="result-title">
+        <div class="result-world" aria-hidden="true">
+          <div class="result-portal"></div>
+          <div class="constellation constellation-a"></div>
+          <div class="constellation constellation-b"></div>
+          <div class="lumi-sprite lumi-result state-4"></div>
+        </div>
+        <div class="result-panel">
+          <p class="result-kicker">RUN COMPLETE</p>
+          <h1 id="result-title">플레이 완료!</h1>
+          <div class="total-score"><span>총점</span><strong id="result-score">0000</strong></div>
+          <div class="result-stats">
+            <div><span>최고 콤보</span><strong id="result-combo">x0</strong></div>
+            <div><span>집중력</span><strong id="result-focus">0</strong></div>
+            <div><span>기억력</span><strong id="result-memory">0</strong></div>
+            <div><span>패턴 감지</span><strong id="result-pattern">0</strong></div>
+          </div>
+          <div class="result-actions">
+            <button id="retry-button" class="primary-button" type="button">다시 도전하기</button>
+            <button id="share-button" class="secondary-button" type="button">기록 공유하기</button>
+          </div>
+          <p id="result-message" class="result-message">루미가 당신의 도전을 기억할게요.</p>
+        </div>
+      </section>
+    </main>
+
+    <dialog id="how-to-dialog" class="how-to-dialog">
+      <button id="close-how-to" class="dialog-close" type="button" aria-label="닫기">×</button>
+      <p class="result-kicker">HOW TO PLAY</p>
+      <h2>루미와 5라운드를 달려요</h2>
+      <ul>
+        <li>세 가지 미니게임이 랜덤으로 등장해요.</li>
+        <li>틀린 클릭마다 하트가 하나 줄어들어요.</li>
+        <li>라운드가 올라갈수록 속도와 방해 요소가 늘어나요.</li>
+        <li>마지막 라운드는 하트가 모두 사라질 때까지 이어져요.</li>
+      </ul>
+      <button id="dialog-start-button" class="primary-button" type="button">도전 시작</button>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>
