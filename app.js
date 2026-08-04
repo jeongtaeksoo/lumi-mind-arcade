@@ -22,7 +22,7 @@ const state = {
   finalLevel: 1, roundTimer: null, memoryTimer: null, paused: false, modes: [], stats: { focus: 0, memory: 0, pattern: 0 }
 };
 
-function showScreen(name) { Object.values(screens).forEach((screen) => screen.classList.remove("active")); screens[name].classList.add("active"); }
+function showScreen(name) { Object.values(screens).forEach((screen) => screen.classList.remove("active")); screens[name].classList.add("active"); window.scrollTo(0, 0); requestAnimationFrame(() => window.scrollTo(0, 0)); setTimeout(() => window.scrollTo(0, 0), 40); }
 function randomItem(list) { return list[Math.floor(Math.random() * list.length)]; }
 function shuffle(list) { return [...list].sort(() => Math.random() - 0.5); }
 function formatScore(score) { return String(Math.max(0, score)).padStart(3, "0"); }
