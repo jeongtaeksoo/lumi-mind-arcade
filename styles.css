@@ -90,7 +90,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 4px; }
 .home-badge { position: absolute; z-index: 3; top: 34px; right: 42px; padding: 12px 19px; border: 1px solid rgba(185,144,255,.7); border-radius: 999px; background: rgba(22, 23, 73, .7); color: var(--text); font-weight: 800; box-shadow: 0 0 24px rgba(185,144,255,.18); }
 .gem-dot, .companion-gem { display: inline-block; width: 14px; height: 18px; margin-right: 8px; vertical-align: -3px; transform: rotate(45deg); border: 1px solid var(--mint); background: linear-gradient(135deg, var(--cyan), var(--violet)); box-shadow: 0 0 12px rgba(88,233,255,.7); }
 
-.lumi-sprite { background-image: url("./public/assets/lumi-sprite-sheet.png"); background-size: 500% 100%; background-repeat: no-repeat; background-color: transparent; will-change: transform; }
+.lumi-sprite { background-image: url("./public/assets/lumi-sprite-sheet.png?v=2"); background-size: 500% 100%; background-repeat: no-repeat; background-color: transparent; will-change: transform; }
 .state-0 { background-position: 0% center; }.state-1 { background-position: 25% center; }.state-2 { background-position: 50% center; }.state-3 { background-position: 75% center; }.state-4 { background-position: 100% center; }
 .lumi-home { position: absolute; width: min(24vw, 330px); height: min(35vw, 480px); right: 17%; bottom: 12%; background-color: transparent; background-size: 500% 100%; filter: drop-shadow(0 16px 26px rgba(21, 20, 93, .7)); animation: lumi-home-float 5.2s ease-in-out infinite; }
 @keyframes lumi-home-float { 0%, 100% { transform: translate3d(0, 0, 0) rotate(-1deg); } 50% { transform: translate3d(0, -10px, 0) rotate(1.2deg); } }
