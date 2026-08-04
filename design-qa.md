@@ -67,4 +67,5 @@ passed
 - Removed the home-world crystal rectangles so the mascot and orbital backdrop remain the visual focus.
 - Refined the gameplay HUD into grouped information chips and verified default music playback with an autoplay fallback.
 - Fixed memory-mode validation to compare clicks against the randomized reveal order; verified a non-linear sequence clears with all five hearts intact.
+- Decoupled memory-card layout order from reveal order so every round presents a different spatial sequence, not a left-to-right playback.
 - Let wide-screen playfields expand vertically to remove the large lower dead zone, and added generated primary/secondary button frames with HTML text overlays.

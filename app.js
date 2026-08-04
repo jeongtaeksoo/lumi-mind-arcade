@@ -280,9 +280,10 @@ function renderMemory() {
   const length = Math.min(7, 3 + state.round + (state.round >= 5 ? Math.ceil(state.finalLevel / 2) : 0));
   const symbols = ["◆", "●", "✦", "■", "✧", "▲", "◇"];
   const sequence = shuffle(symbols).slice(0, length);
+  const boardOrder = shuffle(Array.from({ length }, (_, index) => index));
   const revealOrder = shuffle(Array.from({ length }, (_, index) => index));
   const board = document.createElement("div"); board.className = "memory-board"; ui.playfield.appendChild(board);
-  const cards = revealOrder.map((sequenceIndex) => {
+  const cards = boardOrder.map((sequenceIndex) => {
     const button = document.createElement("button"); button.type = "button"; button.className = "memory-card"; button.dataset.index = sequenceIndex; button.innerHTML = `<span class="memory-symbol">${sequence[sequenceIndex]}</span>`; button.disabled = true; board.appendChild(button); return button;
   });
   const cardsBySequence = new Map(cards.map((card) => [Number(card.dataset.index), card]));
