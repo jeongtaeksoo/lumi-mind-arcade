@@ -276,14 +276,16 @@ function renderMemory() {
   ui.playfield.innerHTML = "";
   const length = Math.min(7, 3 + state.round + (state.round >= 5 ? Math.ceil(state.finalLevel / 2) : 0));
   const symbols = ["◆", "●", "✦", "■", "✧", "▲", "◇"];
-  const sequence = Array.from({ length }, () => randomItem(symbols));
+  const sequence = shuffle(symbols).slice(0, length);
+  const revealOrder = shuffle(Array.from({ length }, (_, index) => index));
   const board = document.createElement("div"); board.className = "memory-board"; ui.playfield.appendChild(board);
-  const cards = sequence.map((symbol, index) => {
-    const button = document.createElement("button"); button.type = "button"; button.className = "memory-card"; button.dataset.index = index; button.innerHTML = `<span class="memory-symbol">${symbol}</span>`; button.disabled = true; board.appendChild(button); return button;
+  const cards = revealOrder.map((sequenceIndex) => {
+    const button = document.createElement("button"); button.type = "button"; button.className = "memory-card"; button.dataset.index = sequenceIndex; button.innerHTML = `<span class="memory-symbol">${sequence[sequenceIndex]}</span>`; button.disabled = true; board.appendChild(button); return button;
   });
+  const cardsBySequence = new Map(cards.map((card) => [Number(card.dataset.index), card]));
   let current = 0;
   const revealTime = Math.max(360, 840 - state.round * 95 - (state.round >= 5 ? state.finalLevel * 40 : 0));
-  cards.forEach((card, index) => setTimeout(() => card.classList.add("revealed"), index * revealTime));
+  revealOrder.forEach((sequenceIndex, revealIndex) => setTimeout(() => cardsBySequence.get(sequenceIndex).classList.add("revealed"), revealIndex * revealTime));
   state.memoryTimer = setTimeout(() => {
     if (state.paused) return;
     cards.forEach((card) => { card.classList.remove("revealed"); card.disabled = false; });

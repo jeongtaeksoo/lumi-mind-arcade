@@ -60,3 +60,5 @@ passed
 - Browser console logs: empty after the tested flows.
 - Memory mode cards are vertically and horizontally centered inside the playfield on desktop and mobile.
 - Removed the low-priority home shortcut row and added a light running-in-place motion to the home mascot.
+- Memory reveal order now randomizes card positions instead of always revealing left-to-right; correct input still advances the stage.
+- Focus mode randomizes target/decoy positions with an active round timer; pattern mode keeps one randomly placed odd tile on the board.
