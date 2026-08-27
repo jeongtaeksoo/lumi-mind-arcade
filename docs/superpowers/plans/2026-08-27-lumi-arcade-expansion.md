@@ -97,7 +97,7 @@ test("score formula is exact and combo is capped", () => {
 
 - [ ] **Step 2: Run the tests and verify the missing module failure**
 
-Run: `node --test tests/game.test.mjs`  
+Run: `node --test tests/game.test.mjs`
 Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `game-core.mjs`.
 
 - [ ] **Step 3: Implement the minimal pure contracts**
@@ -145,13 +145,13 @@ At the top of `app.js`, import only the core names used by the current slice. Do
 
 - [ ] **Step 5: Run the pure tests**
 
-Run: `node --test tests/game.test.mjs`  
+Run: `node --test tests/game.test.mjs`
 Expected: 4 tests PASS.
 
 - [ ] **Step 6: Smoke-test module loading**
 
-Run: `python3 -m http.server 4173`  
-Open: `http://localhost:4173`  
+Run: `python3 -m http.server 4173`
+Open: `http://localhost:4173`
 Expected: home renders, Start opens a round, browser console has no module/CORS error.
 
 - [ ] **Step 7: Commit the core slice**
@@ -225,7 +225,7 @@ test("finalizing a run updates totals and bests once", () => {
 
 - [ ] **Step 2: Run the focused tests and verify missing exports**
 
-Run: `node --test --test-name-pattern="attempt|storage|finalizing" tests/game.test.mjs`  
+Run: `node --test --test-name-pattern="attempt|storage|finalizing" tests/game.test.mjs`
 Expected: FAIL because the four persistence exports do not exist.
 
 - [ ] **Step 3: Implement validation and record mutation**
@@ -266,12 +266,12 @@ Call `saveAttempt` only when the entire generated stage attempt succeeds or its 
 
 - [ ] **Step 5: Run all tests**
 
-Run: `node --test tests/game.test.mjs`  
+Run: `node --test tests/game.test.mjs`
 Expected: all tests PASS.
 
 - [ ] **Step 6: Verify storage failure manually**
 
-In DevTools, temporarily override `Storage.prototype.setItem` to throw, finish one stage, and then restore it.  
+In DevTools, temporarily override `Storage.prototype.setItem` to throw, finish one stage, and then restore it.
 Expected: play continues; no duplicate heart/score event; the app marks the session non-persistent and does not claim that a record was saved.
 
 - [ ] **Step 7: Commit persistence**
@@ -314,7 +314,7 @@ test("static shell advertises six modes and retains routed original music", () =
 
 - [ ] **Step 2: Run the static test and verify failure**
 
-Run: `node --test --test-name-pattern="static shell" tests/game.test.mjs`  
+Run: `node --test --test-name-pattern="static shell" tests/game.test.mjs`
 Expected: FAIL because the copy says three modes, only four cards exist, and routed audio elements are incomplete.
 
 - [ ] **Step 3: Update semantic HTML and exact Korean copy**
@@ -335,9 +335,9 @@ Before adding new mode styles, collapse duplicate final definitions for `.home-c
 
 - [ ] **Step 7: Run tests and browser smoke checks**
 
-Run: `node --test tests/game.test.mjs`  
-Expected: all tests PASS.  
-Open home at 1440×900 and 390×844.  
+Run: `node --test tests/game.test.mjs`
+Expected: all tests PASS.
+Open home at 1440×900 and 390×844.
 Expected: all six cards are visible, no horizontal scroll, the music toggle works after a click, home/game routes request the correct local MP3 without overlap, and console has no error.
 
 - [ ] **Step 8: Commit the six-mode shell and retained music routing**
@@ -381,7 +381,7 @@ test("six mode tables match the design endpoints", () => {
 
 - [ ] **Step 2: Run the table test and verify failure**
 
-Run: `node --test --test-name-pattern="six mode tables" tests/game.test.mjs`  
+Run: `node --test --test-name-pattern="six mode tables" tests/game.test.mjs`
 Expected: FAIL because `MODE_LEVELS` is not complete.
 
 - [ ] **Step 3: Add all seven config rows from the design table**
@@ -457,9 +457,9 @@ state.roundTimer = setTimeout(() => {
 
 - [ ] **Step 7: Run unit and runtime checks for all four modes**
 
-Run: `node --test tests/game.test.mjs`  
-Expected: all tests PASS.  
-For each existing mode, force it through DevTools state or deterministic mode order and verify one success, one wrong input, and one timeout.  
+Run: `node --test tests/game.test.mjs`
+Expected: all tests PASS.
+For each existing mode, force it through DevTools state or deterministic mode order and verify one success, one wrong input, and one timeout.
 Expected: success adds one attempt/one success; wrong and timeout each remove one heart and add exactly one error; timeout also adds one timeout; combo resets only on failure.
 
 - [ ] **Step 8: Commit existing-mode upgrades**
@@ -499,7 +499,7 @@ test("signal trial follows the displayed rule in a conflict set", () => {
 
 - [ ] **Step 2: Run the signal test and verify missing exports**
 
-Run: `node --test --test-name-pattern="signal trial" tests/game.test.mjs`  
+Run: `node --test --test-name-pattern="signal trial" tests/game.test.mjs`
 Expected: FAIL because signal trial functions do not exist.
 
 - [ ] **Step 3: Implement deterministic trial generation**
@@ -512,9 +512,9 @@ Show `색 맞추기` or `모양 맞추기` as persistent text and icon, a refere
 
 - [ ] **Step 5: Verify conflicts, switching, and failure paths**
 
-Run: `node --test tests/game.test.mjs`  
-Expected: all tests PASS.  
-In the browser, complete a conflict trial by choosing the active-rule match, then choose the inactive-rule match on the next trial, then let one stage time out.  
+Run: `node --test tests/game.test.mjs`
+Expected: all tests PASS.
+In the browser, complete a conflict trial by choosing the active-rule match, then choose the inactive-rule match on the next trial, then let one stage time out.
 Expected: only the active-rule answer succeeds; wrong and timeout cost one heart each; current rule is always visible as text.
 
 - [ ] **Step 6: Commit Signal Switch**
@@ -558,7 +558,7 @@ test("star path is adjacent, unique, and exactly the requested length", () => {
 
 - [ ] **Step 2: Run the path test and verify missing exports**
 
-Run: `node --test --test-name-pattern="star path" tests/game.test.mjs`  
+Run: `node --test --test-name-pattern="star path" tests/game.test.mjs`
 Expected: FAIL because star path functions do not exist.
 
 - [ ] **Step 3: Implement bounded path generation**
@@ -571,9 +571,9 @@ Reveal numbered stars at the design’s interval, clear them, start the input ti
 
 - [ ] **Step 5: Verify touch, keyboard, reduced motion, and error paths**
 
-Run: `node --test tests/game.test.mjs`  
-Expected: all tests PASS.  
-At 390×844, complete one path with touch. Repeat with keyboard only. Emulate `prefers-reduced-motion: reduce` and repeat. Enter one wrong cell and allow one timeout.  
+Run: `node --test tests/game.test.mjs`
+Expected: all tests PASS.
+At 390×844, complete one path with touch. Repeat with keyboard only. Emulate `prefers-reduced-motion: reduce` and repeat. Enter one wrong cell and allow one timeout.
 Expected: grid stays inside the playfield; focus remains visible; reveal remains understandable without movement animation; each failure costs exactly one heart.
 
 - [ ] **Step 6: Commit Star Trail**
@@ -608,7 +608,7 @@ test("result code contains no random cognitive metric", () => {
 
 - [ ] **Step 2: Run the result contract and verify failure**
 
-Run: `node --test --test-name-pattern="random cognitive" tests/game.test.mjs`  
+Run: `node --test --test-name-pattern="random cognitive" tests/game.test.mjs`
 Expected: FAIL against the current random result calculation.
 
 - [ ] **Step 3: Wire round planning and adapted configs**
@@ -629,13 +629,13 @@ Pause clears current timers, increments `stageToken`, blocks input, and opens `#
 
 - [ ] **Step 7: Verify the full loop and persistence truth**
 
-Run: `node --test tests/game.test.mjs`  
-Expected: all tests PASS.  
-Play through rounds 1 and 2.  
-Expected: all six modes appear exactly once.  
-Seed focus with four recent failures, start at round 3, and inspect the selected plan/config.  
-Expected: focus is included and uses one lower level.  
-Finish a run, note score/combo/accuracy, reload, and inspect home/results.  
+Run: `node --test tests/game.test.mjs`
+Expected: all tests PASS.
+Play through rounds 1 and 2.
+Expected: all six modes appear exactly once.
+Seed focus with four recent failures, start at round 3, and inspect the selected plan/config.
+Expected: focus is included and uses one lower level.
+Finish a run, note score/combo/accuracy, reload, and inspect home/results.
 Expected: displayed local records and saved JSON match the observed events exactly; totalRuns increments once.
 
 - [ ] **Step 8: Commit final gameplay integration**
@@ -660,22 +660,22 @@ git commit -m "feat: adapt rounds and report truthful results"
 
 - [ ] **Step 1: Run the automated regression suite before final polish**
 
-Run: `node --test tests/game.test.mjs`  
+Run: `node --test tests/game.test.mjs`
 Expected: all tests PASS with no skipped test.
 
 - [ ] **Step 2: Complete the 1440×900 desktop matrix**
 
-Serve with `python3 -m http.server 4173`. At 1440×900, use mouse to trigger success, wrong input, timeout, pause/resume, round change, final result, retry, share fallback, and home return across all six modes.  
+Serve with `python3 -m http.server 4173`. At 1440×900, use mouse to trigger success, wrong input, timeout, pause/resume, round change, final result, retry, share fallback, and home return across all six modes.
 Expected: no overlap or clipped controls; every state has text feedback; score/heart/combo change once per event; console has 0 errors; Network has 0 failed requests.
 
 - [ ] **Step 3: Complete the 390×844 mobile matrix**
 
-Emulate 390×844 with touch. Complete all six modes and results, including signal candidates and a 5×5 trail. Inspect `document.documentElement.scrollWidth === document.documentElement.clientWidth`.  
+Emulate 390×844 with touch. Complete all six modes and results, including signal candidates and a 5×5 trail. Inspect `document.documentElement.scrollWidth === document.documentElement.clientWidth`.
 Expected: expression is true; all primary controls are at least 44×44; no key instruction, timer, heart, or result action is cut off.
 
 - [ ] **Step 4: Complete keyboard and motion matrices**
 
-Reload and use only Tab, Shift+Tab, Enter, Space, arrow keys, `p`, and Escape. Complete one stage in every mode, including direction and trail. Then emulate `prefers-reduced-motion: reduce` and repeat a success, failure, stage transition, and result transition.  
+Reload and use only Tab, Shift+Tab, Enter, Space, arrow keys, `p`, and Escape. Complete one stage in every mode, including direction and trail. Then emulate `prefers-reduced-motion: reduce` and repeat a success, failure, stage transition, and result transition.
 Expected: visible focus never disappears; no keyboard trap; direction and trail work; reduced motion has no repeated float, shake, scale pulse, or urgent blink.
 
 - [ ] **Step 5: Audit storage and asset licensing**

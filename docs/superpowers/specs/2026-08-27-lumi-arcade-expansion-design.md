@@ -1,7 +1,7 @@
 # LUMI’S MIND ARCADE 확장 설계
 
-**작성일:** 2026-08-27  
-**상태:** 구현 기준 확정  
+**작성일:** 2026-08-27
+**상태:** 구현 기준 확정
 **대상:** `lumi-mind-arcade` 정적 vanilla HTML/CSS/JavaScript 게임
 
 ## 1. 목표
