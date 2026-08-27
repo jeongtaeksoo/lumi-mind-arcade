@@ -1,44 +1,323 @@
+import {
+  MODE_IDS,
+  MODE_INFO,
+  MODE_LEVELS,
+  accuracyFor,
+  canCommitHomeMusicRequest,
+  canPauseStage,
+  createCoveragePlan,
+  createDefaultProfile,
+  createPatternTrial,
+  createSignalTrial,
+  createStarPath,
+  difficultyFor,
+  finalizeRun,
+  isSignalAnswerCorrect,
+  isStarStepCorrect,
+  patternTileLabel,
+  readProfile,
+  recordAttempt,
+  scoreStage,
+  selectAdaptiveRound,
+  weaknessFor,
+  writeProfile
+} from "./game-core.mjs";
+
 const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => [...document.querySelectorAll(selector)];
+
 const screens = { home: $("#home-screen"), game: $("#game-screen"), result: $("#result-screen") };
 const ui = {
-  start: $("#start-button"), retry: $("#retry-button"), home: $("#home-button"), pause: $("#pause-button"),
+  start: $("#start-button"), retry: $("#retry-button"), home: $("#home-button"), resultHome: $("#result-home-button"),
+  pause: $("#pause-button"), resume: $("#resume-button"), pauseOverlay: $("#pause-overlay"),
   howTo: $("#how-to-button"), dialogStart: $("#dialog-start-button"), dialog: $("#how-to-dialog"), closeDialog: $("#close-how-to"),
-  homeWorld: $(".home-world"), homeLumi: $("#home-lumi"), modeCards: [...document.querySelectorAll(".mode-card[data-lumi-state]")],
-  playfield: $("#playfield"), round: $("#round-label"), title: $("#game-status-title"), score: $("#score-label"), hearts: $("#hearts"),
-  stage: $("#stage-label"), stageSteps: [...document.querySelectorAll("[data-stage-step]")], modeIcon: $(".mode-hud-icon"),
-  instruction: $("#instruction-label"), combo: $("#combo-label"), progress: $("#progress-bar"), hint: $("#hint-text"),
-  timerPanel: $("#timer-panel"), timerLabel: $("#timer-label"), timerBar: $("#timer-bar"),
-  gameLumi: $("#game-lumi"), speechTitle: $("#speech-title"), speechText: $("#speech-text"), meter: $("#round-meter-fill"),
-  resultScore: $("#result-score"), resultCombo: $("#result-combo"), resultFocus: $("#result-focus"), resultMemory: $("#result-memory"), resultPattern: $("#result-pattern"),
-  resultDirection: $("#result-direction"), resultMessage: $("#result-message"), resultHome: $("#result-home-button"), progressLabel: $("#round-progress-label"), share: $("#share-button"), toast: $("#toast"), homeMusic: $("#home-bgm"), gameMusic: $("#game-bgm"), musicToggle: $("#music-toggle"), timerTitle: $("#timer-title")
+  music: $("#music-toggle"), homeMusic: $("#home-bgm"), gameMusic: $("#game-bgm"), homeLumi: $("#home-lumi"), modeCards: $$(".mode-card"),
+  recordSummary: $("#record-summary"), homeBestScore: $("#home-best-score"), homeBestCombo: $("#home-best-combo"), homeTotalRuns: $("#home-total-runs"),
+  gameHeader: $(".game-header"), gameLayout: $(".game-layout"), playfield: $("#playfield"), round: $("#round-label"), stage: $("#stage-label"),
+  title: $("#game-status-title"), score: $("#score-label"), combo: $("#combo-label"), hearts: $("#hearts"),
+  instruction: $("#instruction-label"), difficulty: $("#difficulty-label"), attemptProgress: $("#attempt-progress"), hint: $("#hint-text"),
+  timerPanel: $("#timer-panel"), timerTitle: $("#timer-title"), timerLabel: $("#timer-label"), timerBar: $("#timer-bar"), timerWarning: $("#timer-warning"),
+  progress: $("#progress-bar"), progressLabel: $("#round-progress-label"), stageSteps: $$("[data-stage-step]"),
+  gameLumi: $("#game-lumi"), speechTitle: $("#speech-title"), speechText: $("#speech-text"), partnerModes: $$("[data-partner-mode]"), meter: $("#round-meter-fill"),
+  resultScore: $("#result-score"), resultCombo: $("#result-combo"), resultRound: $("#result-round"), resultBestScore: $("#result-best-score"), resultBestCombo: $("#result-best-combo"),
+  resultRows: Object.fromEntries($$("[data-result-mode]").map((row) => [row.dataset.resultMode, row])),
+  resultRecommendation: $("#result-recommendation"), saveStatus: $("#save-status"), share: $("#share-button"),
+  toast: $("#toast"), announcer: $("#stage-announcer")
 };
 
-const MODE_INFO = {
-  focus: { label: "집중 모드", short: "집중", instruction: "목표를 제한 시간 안에 클릭하세요", hint: "순발력 타이머가 끝나기 전에 빛나는 목표를 눌러요." },
-  memory: { label: "기억 모드", short: "기억", instruction: "빛난 순서대로 눌러보세요", hint: "루미가 보여준 순서를 천천히 떠올려요." },
-  pattern: { label: "패턴 모드", short: "패턴", instruction: "달라진 패턴을 찾아보세요", hint: "모양과 색이 다른 타일 하나를 찾아요." },
-  direction: { label: "방향 모드", short: "방향", instruction: "화면에 나온 순서대로 입력하세요", hint: "키보드 방향키 또는 화면 버튼으로 순서를 완성해요." }
+const MODE_UI = {
+  focus: { title: "별빛 포착", instruction: "빛나는 목표를 연속으로 찾으세요", hint: "방해 도형 사이에서 움직이는 별빛을 따라가요.", intro: "목표가 움직일 때마다 다시 찾아요.", lumi: 2 },
+  memory: { title: "빛 순서", instruction: "반짝인 카드 순서를 재현하세요", hint: "같은 카드가 다시 등장할 수도 있어요.", intro: "빛이 모두 꺼진 뒤 순서대로 눌러요.", lumi: 1 },
+  pattern: { title: "균열 탐색", instruction: "규칙이 다른 타일 하나를 찾으세요", hint: "모양, 회전, 명도 차이를 차분히 살펴봐요.", intro: "답을 미리 강조하지 않아요. 관찰이 열쇠예요.", lumi: 3 },
+  direction: { title: "궤도 입력", instruction: "보이는 방향을 순서대로 입력하세요", hint: "키보드 방향키나 화면 패드를 사용할 수 있어요.", intro: "현재 표시된 화살표부터 빠르게 입력해요.", lumi: 4 },
+  switch: { title: "신호 전환", instruction: "지금 표시된 규칙에 맞는 신호를 고르세요", hint: "색 맞추기와 모양 맞추기가 바뀌어요.", intro: "규칙 문구를 먼저 읽고 후보를 골라요.", lumi: 2 },
+  trail: { title: "별길 추적", instruction: "잠깐 빛난 별길을 시작부터 따라가세요", hint: "터치하거나 방향키로 이동한 뒤 선택해요.", intro: "상하좌우로 이어진 길을 기억해요.", lumi: 1 }
 };
+
+const DIRECTION_INFO = {
+  ArrowUp: { symbol: "↑", label: "위" }, ArrowDown: { symbol: "↓", label: "아래" },
+  ArrowLeft: { symbol: "←", label: "왼쪽" }, ArrowRight: { symbol: "→", label: "오른쪽" }
+};
+const MEMORY_SYMBOLS = ["◆", "●", "✦", "■", "✧", "▲", "◇", "○"];
+
+const newRunStats = () => Object.fromEntries(MODE_IDS.map((mode) => [mode, { attempts: 0, successes: 0, errors: 0, timeouts: 0, recent: [] }]));
+const unavailableStorage = { getItem() { throw new Error("unavailable"); }, setItem() { throw new Error("unavailable"); } };
+let storage = unavailableStorage;
+try { storage = window.localStorage; } catch { /* Continue in memory. */ }
+let { profile, persistent: storagePersistent } = readProfile(storage);
 
 const state = {
-  round: 1, hearts: 5, score: 0, combo: 0, bestCombo: 0, mode: "focus", roundProgress: 0,
-  finalLevel: 1, stageIndex: 0, roundPlan: [], stageLocked: false, roundTimer: null, memoryTimer: null, timerInterval: null,
-  paused: false, directionSequence: [], directionIndex: 0, stats: { focus: 0, memory: 0, pattern: 0, direction: 0 }
+  round: 1, finalLevel: 1, stageIndex: 0, roundPlan: [], coveragePlan: [], mode: "focus", difficulty: 1, config: MODE_LEVELS.focus[0],
+  hearts: 5, score: 0, combo: 0, bestCombo: 0, paused: false, stageLocked: false, stageToken: 0, runFinalized: false,
+  remainingRatio: 0, runStats: newRunStats(), directionSequence: [], directionIndex: 0
 };
-let musicEnabled = true;
 
-function showScreen(name) { Object.values(screens).forEach((screen) => screen.classList.remove("active")); screens[name].classList.add("active"); window.scrollTo(0, 0); requestAnimationFrame(() => window.scrollTo(0, 0)); setTimeout(() => window.scrollTo(0, 0), 40); }
-function randomItem(list) { return list[Math.floor(Math.random() * list.length)]; }
-function shuffle(list) { return [...list].sort(() => Math.random() - 0.5); }
-function formatScore(score) { return String(Math.max(0, score)).padStart(3, "0"); }
+const timeoutIds = new Set();
+let timerInterval = null;
+let toastTimer = null;
+let audioContext = null;
+let pauseReturnFocus = null;
+let homeMusicRequestId = 0;
+const activeOscillators = new Set();
+
+function showScreen(name) {
+  Object.entries(screens).forEach(([key, screen]) => {
+    screen.classList.toggle("active", key === name);
+    screen.setAttribute("aria-hidden", String(key !== name));
+  });
+  window.scrollTo(0, 0);
+}
+
+function announce(message) {
+  ui.announcer.textContent = "";
+  requestAnimationFrame(() => { ui.announcer.textContent = message; });
+}
+
+function showToast(message) {
+  clearTimeout(toastTimer);
+  ui.toast.textContent = message;
+  ui.toast.classList.add("visible");
+  toastTimer = setTimeout(() => ui.toast.classList.remove("visible"), 2200);
+}
+
+function shuffle(values) {
+  const result = [...values];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const swap = Math.floor(Math.random() * (index + 1));
+    [result[index], result[swap]] = [result[swap], result[index]];
+  }
+  return result;
+}
+
+function randomItem(values) { return values[Math.floor(Math.random() * values.length)]; }
+function formatScore(value) { return String(Math.max(0, value)).padStart(4, "0"); }
+function setSpeech(title, text) { ui.speechTitle.textContent = title; ui.speechText.textContent = text; }
+
+function setLumi(element, index) {
+  element.className = element.className.replace(/state-\d/g, "").trim();
+  element.classList.add(`state-${index}`);
+}
+
+function reactLumi(kind) {
+  ui.gameLumi.classList.remove("react-success", "react-error");
+  void ui.gameLumi.offsetWidth;
+  ui.gameLumi.classList.add(`react-${kind}`);
+  later(() => ui.gameLumi.classList.remove(`react-${kind}`), kind === "success" ? 420 : 320, false);
+}
+
+function setMusicUi(isPlaying) {
+  ui.music.setAttribute("aria-pressed", String(isPlaying));
+  ui.music.setAttribute("aria-label", isPlaying ? "배경음악 끄기" : "배경음악 켜기");
+  ui.music.textContent = isPlaying ? "♫ 음악 끄기" : "♫ 음악 켜기";
+}
+
+function getAudioContext() {
+  if (!profile.settings.soundEnabled) return null;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!audioContext) audioContext = new AudioContextClass();
+  if (audioContext.state === "suspended") audioContext.resume().catch(() => {});
+  return audioContext;
+}
+
+function playTone(kind) {
+  const context = getAudioContext();
+  if (!context) return;
+  const tones = {
+    tap: [520, 0.05, "sine"], transition: [420, 0.09, "sine"], success: [720, 0.16, "triangle"],
+    error: [190, 0.18, "sawtooth"], combo: [920, 0.2, "triangle"]
+  };
+  const [frequency, duration, type] = tones[kind] || tones.tap;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, context.currentTime);
+  if (kind === "success" || kind === "combo") oscillator.frequency.exponentialRampToValueAtTime(frequency * 1.25, context.currentTime + duration);
+  gain.gain.setValueAtTime(0.0001, context.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.11, context.currentTime + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + duration);
+  oscillator.connect(gain).connect(context.destination);
+  activeOscillators.add(oscillator);
+  oscillator.onended = () => activeOscillators.delete(oscillator);
+  oscillator.start();
+  oscillator.stop(context.currentTime + Math.min(0.25, duration));
+}
+
+function stopTones() {
+  activeOscillators.forEach((oscillator) => { try { oscillator.stop(); } catch { /* Already stopped. */ } });
+  activeOscillators.clear();
+}
+
+function startHomeMusic() {
+  if (!profile.settings.soundEnabled) return;
+  const requestId = ++homeMusicRequestId;
+  ui.homeMusic.volume = 0.28;
+  const request = ui.homeMusic.play();
+  if (request && typeof request.then === "function") {
+    request.then(() => {
+      if (canCommitHomeMusicRequest({
+        requestId,
+        currentRequestId: homeMusicRequestId,
+        soundEnabled: profile.settings.soundEnabled,
+        homeActive: screens.home.classList.contains("active"),
+        paused: ui.homeMusic.paused
+      })) setMusicUi(true);
+    }).catch(() => {
+      if (requestId === homeMusicRequestId && screens.home.classList.contains("active")) setMusicUi(false);
+    });
+  }
+}
+
+function startGameMusic() {
+  if (!profile.settings.soundEnabled) return;
+  ui.gameMusic.volume = 0.24;
+  const request = ui.gameMusic.play();
+  if (request && typeof request.then === "function") request.catch(() => {});
+}
+
+function stopMusic(audio) {
+  if (audio === ui.homeMusic) homeMusicRequestId += 1;
+  audio.pause();
+  audio.currentTime = 0;
+}
+
+function toggleMusic() {
+  if (ui.homeMusic.paused) {
+    profile.settings.soundEnabled = true;
+    storagePersistent = writeProfile(storage, profile);
+    startHomeMusic();
+    playTone("transition");
+    return;
+  }
+  profile.settings.soundEnabled = false;
+  storagePersistent = writeProfile(storage, profile);
+  homeMusicRequestId += 1;
+  ui.homeMusic.pause();
+  ui.gameMusic.pause();
+  stopTones();
+  setMusicUi(false);
+}
+
+function clearStageTimers() {
+  timeoutIds.forEach((id) => clearTimeout(id));
+  timeoutIds.clear();
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+}
+
+function later(callback, delay, guardStage = true) {
+  const token = state.stageToken;
+  const id = setTimeout(() => {
+    timeoutIds.delete(id);
+    if (!guardStage || (token === state.stageToken && !state.paused)) callback();
+  }, delay);
+  timeoutIds.add(id);
+  return id;
+}
+
+function hideTimer() {
+  ui.timerPanel.classList.add("is-hidden");
+  ui.timerPanel.classList.remove("urgent");
+  ui.timerWarning.textContent = "";
+  ui.timerBar.style.transform = "scaleX(1)";
+  state.remainingRatio = 0;
+}
+
+function startTimer(duration, title, onTimeout) {
+  ui.timerPanel.classList.remove("is-hidden", "urgent");
+  ui.timerTitle.textContent = title;
+  const startedAt = performance.now();
+  const token = state.stageToken;
+  const tick = () => {
+    if (token !== state.stageToken || state.paused) return;
+    const remaining = Math.max(0, duration - (performance.now() - startedAt));
+    state.remainingRatio = remaining / duration;
+    ui.timerLabel.textContent = `${(remaining / 1000).toFixed(1)}초`;
+    ui.timerBar.style.transform = `scaleX(${state.remainingRatio})`;
+    const urgent = state.remainingRatio <= 0.3;
+    ui.timerPanel.classList.toggle("urgent", urgent);
+    ui.timerWarning.textContent = urgent ? "시간이 얼마 남지 않았어요" : "";
+  };
+  tick();
+  timerInterval = setInterval(tick, 50);
+  later(onTimeout, duration);
+}
+
+function updateHomeRecords() {
+  const records = profile.records;
+  ui.recordSummary.classList.toggle("is-hidden", records.totalRuns === 0);
+  ui.homeBestScore.textContent = records.bestScore;
+  ui.homeBestCombo.textContent = `x${records.bestCombo}`;
+  ui.homeTotalRuns.textContent = records.totalRuns;
+}
+
+function renderHearts(damaged = -1) {
+  ui.hearts.innerHTML = Array.from({ length: 5 }, (_, index) => `<span class="heart ${index >= state.hearts ? "lost" : ""} ${index === damaged ? "damage" : ""}" aria-hidden="true">${index >= state.hearts ? "♡" : "♥"}</span>`).join("");
+  ui.hearts.setAttribute("aria-label", `남은 하트 ${state.hearts}개`);
+}
+
+function setAttemptProgress(current, total) { ui.attemptProgress.textContent = `${current} / ${total}`; }
+
+function updateRoundProgress(completed = state.stageIndex) {
+  const percentage = Math.round(completed / 3 * 100);
+  ui.progress.style.width = `${percentage}%`;
+  ui.progressLabel.textContent = `${percentage}%`;
+  const overall = Math.min(100, (((state.round - 1) * 3 + completed) / 15) * 100);
+  ui.meter.style.width = `${overall}%`;
+}
+
+function renderStageTracker() {
+  ui.stageSteps.forEach((step, index) => {
+    step.querySelector("span").textContent = state.roundPlan[index] ? MODE_INFO[state.roundPlan[index]].short : "대기";
+    step.classList.toggle("active", index === state.stageIndex);
+    step.classList.toggle("complete", index < state.stageIndex);
+    step.setAttribute("aria-current", index === state.stageIndex ? "step" : "false");
+  });
+}
+
+function updatePartnerModes() {
+  const weakest = [...MODE_IDS].sort((a, b) => weaknessFor(profile.modes[b]) - weaknessFor(profile.modes[a]))[0];
+  ui.partnerModes.forEach((item) => {
+    item.classList.toggle("current", item.dataset.partnerMode === state.mode);
+    item.classList.toggle("weak", item.dataset.partnerMode === weakest && profile.modes[weakest].recent.length >= 4);
+  });
+}
 
 function resetState() {
-  clearTimers();
-  Object.assign(state, { round: 1, hearts: 5, score: 0, combo: 0, bestCombo: 0, mode: "focus", roundProgress: 0, finalLevel: 1, stageIndex: 0, roundPlan: [], stageLocked: false, paused: false, directionSequence: [], directionIndex: 0, stats: { focus: 0, memory: 0, pattern: 0, direction: 0 } });
+  clearStageTimers();
+  stopTones();
+  Object.assign(state, {
+    round: 1, finalLevel: 1, stageIndex: 0, roundPlan: [], coveragePlan: createCoveragePlan(), mode: "focus", difficulty: 1,
+    config: MODE_LEVELS.focus[0], hearts: 5, score: 0, combo: 0, bestCombo: 0, paused: false, stageLocked: false,
+    stageToken: state.stageToken + 1, runFinalized: false, remainingRatio: 0, runStats: newRunStats(), directionSequence: [], directionIndex: 0
+  });
+  ui.score.textContent = formatScore(0);
+  ui.combo.textContent = "x0";
   renderHearts();
 }
 
 function startGame() {
+  getAudioContext();
   resetState();
   stopMusic(ui.homeMusic);
   startGameMusic();
@@ -46,425 +325,592 @@ function startGame() {
   beginRound();
 }
 
-function clearTimers() {
-  if (state.roundTimer) clearTimeout(state.roundTimer);
-  if (state.memoryTimer) clearTimeout(state.memoryTimer);
-  if (state.timerInterval) clearInterval(state.timerInterval);
-  state.roundTimer = null;
-  state.memoryTimer = null;
-  state.timerInterval = null;
-}
-
 function beginRound() {
-  clearTimers();
-  state.paused = false;
-  state.roundProgress = 0;
   state.stageIndex = 0;
-  state.roundPlan = shuffle(["focus", "memory", "pattern", "direction"]).slice(0, 3);
+  state.roundPlan = state.round <= 2
+    ? state.coveragePlan.slice((state.round - 1) * 3, state.round * 3)
+    : selectAdaptiveRound(profile);
   beginStage();
 }
 
 function beginStage() {
-  clearTimers();
+  clearStageTimers();
+  hideTimer();
+  state.stageToken += 1;
+  state.stageLocked = true;
   state.paused = false;
-  state.stageLocked = false;
-  state.mode = state.roundPlan[state.stageIndex] || "focus";
-  const info = MODE_INFO[state.mode];
-  ui.round.textContent = state.round >= 5 ? `라운드 5 / 5 · 최종 ${state.finalLevel}` : `라운드 ${state.round} / 5`;
+  state.mode = state.roundPlan[state.stageIndex];
+  state.difficulty = difficultyFor({ mode: state.mode, round: state.round, finalLevel: state.finalLevel, profile });
+  state.config = MODE_LEVELS[state.mode][state.difficulty - 1];
+  const mode = MODE_UI[state.mode];
+  ui.round.textContent = state.round < 5 ? `${state.round} / 5` : `5 / 5 · 최종 ${state.finalLevel}`;
   ui.stage.textContent = `${state.stageIndex + 1} / 3`;
-  ui.title.textContent = info.label;
-  ui.instruction.textContent = info.instruction;
-  ui.hint.textContent = info.hint;
-  ui.modeIcon.className = `mode-hud-icon ${state.mode === "focus" ? "target-icon" : state.mode === "memory" ? "memory-icon" : state.mode === "pattern" ? "pattern-icon" : "direction-icon"}`;
-  ui.modeIcon.textContent = state.mode === "memory" ? "✦" : state.mode === "pattern" ? "◇" : state.mode === "direction" ? "↕" : "";
-  ui.progress.style.width = `${(state.stageIndex / 3) * 100}%`;
-  ui.progressLabel.textContent = `${Math.round((state.stageIndex / 3) * 100)}%`;
-  ui.meter.style.width = `${Math.min(100, ((state.round - 1) * 3 + state.stageIndex) / 15 * 100)}%`;
+  ui.title.textContent = mode.title;
+  ui.instruction.textContent = mode.instruction;
+  ui.difficulty.textContent = `난이도 ${state.difficulty}`;
+  ui.hint.textContent = mode.hint;
+  ui.playfield.innerHTML = "";
+  setAttemptProgress(0, 1);
+  setLumi(ui.gameLumi, mode.lumi);
+  setSpeech("바로 시작해요", mode.intro);
+  updateRoundProgress();
   renderStageTracker();
-  setLumiState(Math.min(4, state.round - 1));
-  setSpeechForRound();
+  updatePartnerModes();
   renderHearts();
-  if (state.mode === "focus") renderFocus();
-  if (state.mode === "memory") renderMemory();
-  if (state.mode === "pattern") renderPattern();
-  if (state.mode === "direction") renderDirection();
+  announce(mode.instruction);
+  playTone("transition");
+  state.stageLocked = false;
+  renderCurrentMode();
 }
 
-function renderStageTracker() {
-  ui.stageSteps.forEach((step, index) => {
-    const label = step.querySelector("span");
-    if (label && state.roundPlan[index]) label.textContent = MODE_INFO[state.roundPlan[index]].short;
-    step.classList.toggle("active", index === state.stageIndex);
-    step.classList.toggle("complete", index < state.stageIndex);
-    step.classList.remove("failed");
-    step.setAttribute("aria-current", index === state.stageIndex ? "step" : "false");
-  });
+function renderCurrentMode() {
+  clearStageTimers();
+  hideTimer();
+  state.stageToken += 1;
+  state.stageLocked = false;
+  ui.playfield.innerHTML = "";
+  const renderers = { focus: renderFocus, memory: renderMemory, pattern: renderPattern, direction: renderDirection, switch: renderSwitch, trail: renderTrail };
+  renderers[state.mode](state.config);
 }
 
-function setHomeLumiState(index) { ui.homeLumi.className = `lumi-sprite lumi-home state-${index}`; }
-function setLumiState(index) { ui.gameLumi.className = `lumi-sprite lumi-game state-${index}`; }
-function wakeHomeLumi(message = "루미가 깨어났어요. 게임을 시작해볼까요?") {
-  setHomeLumiState(2);
-  void ui.homeLumi.offsetWidth;
-  ui.homeLumi.classList.add("home-awake");
-  setTimeout(() => ui.homeLumi.classList.remove("home-awake"), 820);
-  showToast(message);
-}
-function previewMode(card) {
-  ui.modeCards.forEach((item) => item.classList.toggle("previewing", item === card));
-  setHomeLumiState(Number(card.dataset.lumiState));
-}
-function updateHomeParallax(event) {
-  const rect = screens.home.getBoundingClientRect();
-  const x = (event.clientX - rect.left) / rect.width - 0.5;
-  const y = (event.clientY - rect.top) / rect.height - 0.5;
-  ui.homeWorld.style.setProperty("--lumi-pointer-x", `${x * 18}px`);
-  ui.homeWorld.style.setProperty("--lumi-pointer-y", `${y * 14}px`);
-  ui.homeWorld.style.setProperty("--portal-x", `${x * 10}px`);
-  ui.homeWorld.style.setProperty("--portal-y", `${y * 8}px`);
-  ui.homeWorld.style.setProperty("--platform-x", `${x * 6}px`);
-  ui.homeWorld.style.setProperty("--platform-y", `${y * 4}px`);
-}
-function resetHomeParallax() {
-  ["--lumi-pointer-x", "--lumi-pointer-y", "--portal-x", "--portal-y", "--platform-x", "--platform-y"].forEach((name) => ui.homeWorld.style.setProperty(name, "0px"));
-}
-function reactLumi(kind) {
-  const reaction = `react-${kind}`;
-  ui.gameLumi.classList.remove("react-success", "react-mistake");
-  void ui.gameLumi.offsetWidth;
-  ui.gameLumi.classList.add(reaction);
-  setTimeout(() => ui.gameLumi.classList.remove(reaction), kind === "success" ? 680 : 540);
-}
-function setSpeechForRound() {
-  if (state.round >= 5) {
-    setSpeech("마지막 도전!", `최종 단계 ${state.finalLevel} · 하트가 모두 사라질 때까지 버텨요!`);
-    return;
+function saveAttempt(outcome) {
+  recordAttempt(profile, { mode: state.mode, outcome });
+  const stat = state.runStats[state.mode];
+  stat.attempts += 1;
+  if (outcome === "success") stat.successes += 1;
+  else {
+    stat.errors += 1;
+    if (outcome === "timeout") stat.timeouts += 1;
   }
-  const messages = [
-    ["준비됐나요?", "천천히 시작해봐요."],
-    ["좋아요!", "이번엔 조금 더 빠르게요."],
-    ["집중 모드!", "루미가 실수를 기억하고 있어요."],
-    ["대단해요!", "방해 요소를 잘 살펴봐요."],
-    ["마지막 도전!", "하트가 모두 사라질 때까지 버텨요!"]
-  ];
-  const message = messages[Math.min(messages.length - 1, state.round - 1)];
-  ui.speechTitle.textContent = message[0];
-  ui.speechText.textContent = message[1];
+  stat.recent.push(outcome);
+  stat.recent = stat.recent.slice(-12);
+  storagePersistent = writeProfile(storage, profile);
 }
 
-function renderHearts(damageIndex = -1) {
-  ui.hearts.innerHTML = Array.from({ length: 5 }, (_, index) => `<span class="heart ${index >= state.hearts ? "lost" : ""} ${index === damageIndex ? "damage" : ""}" aria-hidden="true">${index >= state.hearts ? "♡" : "♥"}</span>`).join("");
-  ui.hearts.setAttribute("aria-label", `남은 하트 ${state.hearts}개`);
-}
-
-function loseHeart() {
-  if (state.paused) return;
-  state.hearts -= 1;
-  state.combo = 0;
-  renderHearts(Math.max(0, state.hearts));
-  reactLumi("mistake");
-  ui.combo.textContent = "콤보 x0";
-  setSpeech("괜찮아요!", "다음 기회를 잡아봐요.");
-  if (state.hearts <= 0) {
-    setTimeout(showResults, 420);
-    return true;
-  }
-  return false;
-}
-
-function reward(points) {
-  state.score += points + state.combo * 5;
-  state.combo += 1;
-  state.bestCombo = Math.max(state.bestCombo, state.combo);
-  reactLumi("success");
-  ui.score.textContent = formatScore(state.score);
-  ui.combo.textContent = `콤보 x${state.combo}`;
-}
-
-function setSpeech(title, text) { ui.speechTitle.textContent = title; ui.speechText.textContent = text; }
-function advanceRound() {
-  if (state.round >= 5) {
-    state.finalLevel += 1;
-    beginRound();
-    setSpeech("계속 가볼까요?", `최종 라운드 ${state.finalLevel}단계예요. 세 게임을 다시 달려요.`);
-    return;
-  }
-  state.round += 1;
-  beginRound();
-}
-
-function completeChallenge(points) {
+function failChallenge({ timeout = false } = {}) {
   if (state.stageLocked || state.paused) return;
   state.stageLocked = true;
-  clearTimers();
-  reward(points);
-  state.stats[state.mode] += 1;
-  state.roundProgress = state.stageIndex + 1;
-  ui.progress.style.width = `${(state.roundProgress / 3) * 100}%`;
-  ui.progressLabel.textContent = `${Math.round((state.roundProgress / 3) * 100)}%`;
-  ui.stageSteps[state.stageIndex].classList.remove("active");
-  ui.stageSteps[state.stageIndex].classList.add("complete");
-  if (state.stageIndex >= 2) {
-    setSpeech("라운드 클리어!", state.round >= 5 ? "최종 라운드 한 사이클 완료! 계속 도전해요." : "세 가지 게임을 모두 통과했어요.");
-    setTimeout(() => { if (state.hearts > 0) advanceRound(); }, state.round >= 5 ? 360 : 620);
-    return;
+  clearStageTimers();
+  saveAttempt(timeout ? "timeout" : "error");
+  state.hearts -= 1;
+  state.combo = 0;
+  ui.combo.textContent = "x0";
+  renderHearts(Math.max(0, state.hearts));
+  ui.playfield.classList.remove("feedback-success");
+  ui.playfield.classList.add("feedback-error");
+  reactLumi("error");
+  playTone("error");
+  setSpeech(timeout ? "시간이 끝났어요" : "괜찮아요!", "새 문제에서 다시 흐름을 잡아봐요.");
+  announce(`${timeout ? "시간 초과" : "오답"}. 남은 하트 ${Math.max(0, state.hearts)}개.`);
+  if (state.hearts <= 0) {
+    later(showResults, 620);
+  } else {
+    later(() => {
+      ui.playfield.classList.remove("feedback-error");
+      renderCurrentMode();
+    }, 620);
   }
-  setSpeech("좋아요!", `${MODE_INFO[state.roundPlan[state.stageIndex + 1]].short} 게임으로 이어가요.`);
-  setTimeout(() => {
-    if (state.hearts > 0) {
-      state.stageIndex += 1;
-      beginStage();
-    }
-  }, 420);
 }
 
-function placeRandomly(element, margin = 12) {
-  const rect = ui.playfield.getBoundingClientRect();
-  const x = margin + Math.random() * Math.max(10, rect.width - margin * 2);
-  const y = margin + Math.random() * Math.max(10, rect.height - margin * 2);
+function completeChallenge({ remainingRatio = state.remainingRatio } = {}) {
+  if (state.stageLocked || state.paused) return;
+  state.stageLocked = true;
+  clearStageTimers();
+  saveAttempt("success");
+  const earned = scoreStage({ base: MODE_INFO[state.mode].base, difficulty: state.difficulty, remainingRatio, comboBefore: state.combo });
+  state.score += earned;
+  state.combo += 1;
+  state.bestCombo = Math.max(state.bestCombo, state.combo);
+  ui.score.textContent = formatScore(state.score);
+  ui.combo.textContent = `x${state.combo}`;
+  ui.score.classList.remove("score-pop");
+  void ui.score.offsetWidth;
+  ui.score.classList.add("score-pop");
+  ui.playfield.classList.add("feedback-success");
+  reactLumi("success");
+  const milestone = [3, 5, 10].includes(state.combo);
+  playTone(milestone ? "combo" : "success");
+  setSpeech(milestone ? `${state.combo} 콤보!` : "정답이에요!", `+${earned}점 · 다음 별빛으로 이어가요.`);
+  announce(`정답. ${earned}점 획득. 현재 콤보 ${state.combo}.`);
+  updateRoundProgress(state.stageIndex + 1);
+  ui.stageSteps[state.stageIndex].classList.add("complete");
+  later(() => {
+    ui.playfield.classList.remove("feedback-success");
+    if (state.stageIndex < 2) {
+      state.stageIndex += 1;
+      beginStage();
+    } else if (state.round < 5) {
+      state.round += 1;
+      beginRound();
+    } else {
+      state.finalLevel += 1;
+      beginRound();
+    }
+  }, 620);
+}
+
+function placeRandomly(element, padding = 36) {
+  const width = ui.playfield.clientWidth || 640;
+  const height = ui.playfield.clientHeight || 360;
+  const radius = Math.max(24, element.offsetWidth / 2 || 24);
+  const edge = padding + radius;
+  const x = edge + Math.random() * Math.max(1, width - edge * 2);
+  const y = edge + Math.random() * Math.max(1, height - edge * 2);
   element.style.left = `${x}px`;
   element.style.top = `${y}px`;
 }
 
-function reactionLimitMs() {
-  const limits = [5000, 4000, 3500, 2800, 2000];
-  const cyclePenalty = state.round >= 5 ? Math.max(0, state.finalLevel - 1) * 200 : 0;
-  return Math.max(1200, limits[state.round - 1] - cyclePenalty);
-}
-
-function hideReactionTimer() {
-  ui.timerPanel.classList.add("is-hidden");
-  ui.timerPanel.classList.remove("urgent");
-  ui.timerBar.style.transform = "scaleX(1)";
-}
-
-function startReactionTimer(duration, onTimeout = () => { if (!loseHeart()) renderFocus(); }) {
-  clearTimers();
-  ui.timerPanel.classList.remove("is-hidden", "urgent");
-  const startedAt = performance.now();
-  const tick = () => {
-    const remaining = Math.max(0, duration - (performance.now() - startedAt));
-    const ratio = remaining / duration;
-    ui.timerLabel.textContent = `${(remaining / 1000).toFixed(1)}초`;
-    ui.timerBar.style.transform = `scaleX(${ratio})`;
-    ui.timerPanel.classList.toggle("urgent", ratio <= 0.3);
-    if (remaining <= 0) {
-      clearTimers();
-      onTimeout();
-    }
-  };
-  tick();
-  state.timerInterval = setInterval(tick, 50);
-}
-
-function renderFocus() {
-  clearTimers();
-  ui.timerTitle.textContent = "순발력 챌린지";
-  ui.playfield.innerHTML = "";
-  const distractors = 4 + state.round * 2 + (state.round >= 5 ? state.finalLevel : 0);
-  const target = document.createElement("button");
-  target.type = "button"; target.className = "target"; target.setAttribute("aria-label", "목표");
-  target.style.width = `${Math.max(42, 78 - state.round * 5 - (state.round >= 5 ? state.finalLevel * 2 : 0))}px`;
-  target.style.height = target.style.width;
-  placeRandomly(target, 80); target.addEventListener("click", () => completeChallenge(30 + state.round * 4)); ui.playfield.appendChild(target);
-  const shapes = ["", "circle", "triangle"];
-  for (let i = 0; i < distractors; i += 1) {
-    const decoy = document.createElement("button"); decoy.type = "button"; decoy.className = `decoy ${randomItem(shapes)}`; decoy.setAttribute("aria-label", "방해 요소");
-    decoy.style.borderColor = randomItem(["#ff8ec5", "#b990ff", "#ff9f82"]); placeRandomly(decoy, 50);
-    decoy.addEventListener("click", () => loseHeart()); ui.playfield.appendChild(decoy);
+function renderFocus(config) {
+  let hits = 0;
+  setAttemptProgress(hits, config.hits);
+  const shapes = ["diamond", "circle", "triangle"];
+  for (let index = 0; index < config.decoys; index += 1) {
+    const decoy = document.createElement("button");
+    decoy.type = "button";
+    decoy.className = `decoy shape-${randomItem(shapes)}`;
+    decoy.setAttribute("aria-label", "방해 요소");
+    decoy.addEventListener("click", () => failChallenge());
+    ui.playfield.appendChild(decoy);
+    placeRandomly(decoy, 18);
   }
-  startReactionTimer(reactionLimitMs());
+  const target = document.createElement("button");
+  target.type = "button";
+  target.className = "focus-target";
+  target.setAttribute("aria-label", "빛나는 목표");
+  target.style.setProperty("--target-size", `${Math.max(44, 70 - state.difficulty * 3)}px`);
+  target.addEventListener("click", () => {
+    if (state.stageLocked) return;
+    hits += 1;
+    setAttemptProgress(hits, config.hits);
+    playTone("tap");
+    if (hits >= config.hits) completeChallenge();
+    else placeRandomly(target, 20);
+  });
+  ui.playfield.appendChild(target);
+  placeRandomly(target, 20);
+  startTimer(config.limitMs, "별빛 포착 제한시간", () => failChallenge({ timeout: true }));
 }
 
-function renderMemory() {
-  clearTimers();
-  hideReactionTimer();
-  ui.playfield.innerHTML = "";
-  const length = Math.min(7, 3 + state.round + (state.round >= 5 ? Math.ceil(state.finalLevel / 2) : 0));
-  const symbols = ["◆", "●", "✦", "■", "✧", "▲", "◇"];
-  const sequence = shuffle(symbols).slice(0, length);
-  const boardOrder = shuffle(Array.from({ length }, (_, index) => index));
-  const revealOrder = shuffle(Array.from({ length }, (_, index) => index));
-  const board = document.createElement("div"); board.className = "memory-board"; ui.playfield.appendChild(board);
-  const cards = boardOrder.map((sequenceIndex) => {
-    const button = document.createElement("button"); button.type = "button"; button.className = "memory-card"; button.dataset.index = sequenceIndex; button.innerHTML = `<span class="memory-symbol">${sequence[sequenceIndex]}</span>`; button.disabled = true; board.appendChild(button); return button;
-  });
-  const cardsBySequence = new Map(cards.map((card) => [Number(card.dataset.index), card]));
-  let current = 0;
-  const revealTime = Math.max(360, 840 - state.round * 95 - (state.round >= 5 ? state.finalLevel * 40 : 0));
-  revealOrder.forEach((sequenceIndex, revealIndex) => setTimeout(() => cardsBySequence.get(sequenceIndex).classList.add("revealed"), revealIndex * revealTime));
-  state.memoryTimer = setTimeout(() => {
-    if (state.paused) return;
-    cards.forEach((card) => { card.classList.remove("revealed"); card.disabled = false; });
-    cards.forEach((card) => card.addEventListener("click", () => {
-      if (state.paused) return;
-      if (Number(card.dataset.index) !== revealOrder[current]) {
-        card.classList.add("wrong");
-        if (!loseHeart()) setTimeout(renderMemory, 380);
+function memorySequence(config) {
+  if (state.difficulty <= 2) return shuffle(Array.from({ length: config.cardCount }, (_, index) => index)).slice(0, config.length);
+  const sequence = [];
+  while (sequence.length < config.length) {
+    const next = Math.floor(Math.random() * config.cardCount);
+    if (next !== sequence.at(-1)) sequence.push(next);
+  }
+  return sequence;
+}
+
+function renderMemory(config) {
+  const sequence = memorySequence(config);
+  let inputIndex = 0;
+  setAttemptProgress(0, sequence.length);
+  const board = document.createElement("div");
+  board.className = "memory-board";
+  board.style.setProperty("--memory-columns", config.cardCount <= 6 ? 3 : 4);
+  const cards = Array.from({ length: config.cardCount }, (_, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "memory-card";
+    button.disabled = true;
+    button.innerHTML = `<span>${MEMORY_SYMBOLS[index]}</span>`;
+    button.setAttribute("aria-label", `${index + 1}번 ${MEMORY_SYMBOLS[index]} 카드`);
+    button.addEventListener("click", () => {
+      if (state.stageLocked) return;
+      if (sequence[inputIndex] !== index) {
+        button.classList.add("wrong");
+        failChallenge();
         return;
       }
-      card.classList.add("revealed"); card.disabled = true; current += 1;
-      if (current === sequence.length) completeChallenge(42 + state.round * 5);
-    }));
-  }, sequence.length * revealTime + Math.max(500, 1050 - state.round * 80));
+      button.classList.add("correct");
+      later(() => button.classList.remove("correct"), 170);
+      inputIndex += 1;
+      setAttemptProgress(inputIndex, sequence.length);
+      playTone("tap");
+      if (inputIndex === sequence.length) completeChallenge({ remainingRatio: 0 });
+    });
+    board.appendChild(button);
+    return button;
+  });
+  ui.playfield.appendChild(board);
+  sequence.forEach((cardIndex, index) => {
+    later(() => {
+      cards[cardIndex].classList.add("revealed");
+      announce(`${index + 1}번째 ${MEMORY_SYMBOLS[cardIndex]}`);
+    }, index * config.revealMs);
+    later(() => cards[cardIndex].classList.remove("revealed"), index * config.revealMs + Math.round(config.revealMs * 0.68));
+  });
+  later(() => {
+    cards.forEach((card) => { card.disabled = false; });
+    setSpeech("이제 입력해요", "보여준 순서를 처음부터 재현해요.");
+    announce("순서 공개가 끝났어요. 이제 입력하세요.");
+  }, sequence.length * config.revealMs + 220);
 }
 
-function renderPattern() {
-  clearTimers();
-  hideReactionTimer();
-  ui.playfield.innerHTML = "";
-  const size = state.round >= 5 ? Math.min(8, 5 + Math.ceil(state.finalLevel / 2)) : 4 + Math.ceil(state.round / 2);
-  const columns = Math.min(size, 7);
-  const count = size * columns;
-  const rows = Math.ceil(count / columns);
-  const oddIndex = Math.floor(Math.random() * count);
+function renderPattern(config) {
+  const count = config.size * config.size;
+  const { oddIndex, change, baseShape, otherShape } = createPatternTrial({ count, changes: config.changes });
+  setAttemptProgress(0, 1);
   const board = document.createElement("div");
   board.className = "pattern-board";
-  board.style.setProperty("--pattern-columns", columns);
-  board.style.setProperty("--pattern-rows", rows);
-  ui.playfield.appendChild(board);
+  board.style.setProperty("--pattern-size", config.size);
   for (let index = 0; index < count; index += 1) {
-    const tile = document.createElement("button"); tile.type = "button"; tile.className = `pattern-tile ${index === oddIndex ? "odd" : ""}`; tile.setAttribute("aria-label", "패턴 타일");
-    tile.addEventListener("click", () => {
-      if (index !== oddIndex) { if (!loseHeart()) setTimeout(renderPattern, 300); return; }
-      completeChallenge(38 + state.round * 5 + (state.round >= 5 ? state.finalLevel * 2 : 0));
-    }); board.appendChild(tile);
+    const odd = index === oddIndex;
+    const shape = odd && change === "shape" ? otherShape : baseShape;
+    const tone = odd && change === "color" ? "violet" : "cyan";
+    const rotation = odd && change === "rotation" ? "tilted" : "level";
+    const tile = document.createElement("button");
+    tile.type = "button";
+    tile.className = "pattern-tile";
+    tile.dataset.shape = shape;
+    tile.dataset.tone = tone;
+    tile.dataset.rotation = rotation;
+    tile.setAttribute("aria-label", patternTileLabel({ index, tone, shape, rotation }));
+    tile.addEventListener("click", () => odd ? completeChallenge() : failChallenge());
+    board.appendChild(tile);
   }
-  const delay = Math.max(4200, 11500 - state.round * 1250 - (state.round >= 5 ? state.finalLevel * 460 : 0));
-  state.roundTimer = setTimeout(() => {
-    if (state.paused) return;
-    if (!loseHeart()) renderPattern();
-  }, delay);
-}
-
-const DIRECTION_INFO = {
-  ArrowUp: { symbol: "↑", label: "위" },
-  ArrowDown: { symbol: "↓", label: "아래" },
-  ArrowLeft: { symbol: "←", label: "왼쪽" },
-  ArrowRight: { symbol: "→", label: "오른쪽" }
-};
-
-function directionLimitMs() {
-  const limits = [6000, 5000, 4200, 3500, 2800];
-  const cyclePenalty = state.round >= 5 ? Math.max(0, state.finalLevel - 1) * 180 : 0;
-  return Math.max(1800, limits[state.round - 1] - cyclePenalty);
+  ui.playfield.appendChild(board);
+  startTimer(config.limitMs, "균열 탐색 제한시간", () => failChallenge({ timeout: true }));
 }
 
 function renderDirectionProgress() {
-  const chips = [...ui.playfield.querySelectorAll(".direction-chip")];
-  chips.forEach((chip, index) => {
+  $$(".direction-chip").forEach((chip, index) => {
     chip.classList.toggle("current", index === state.directionIndex);
     chip.classList.toggle("done", index < state.directionIndex);
   });
-  const progress = Math.round((state.directionIndex / state.directionSequence.length) * 100);
-  ui.progress.style.width = `${progress}%`;
-  ui.progressLabel.textContent = `${progress}%`;
+  setAttemptProgress(state.directionIndex, state.directionSequence.length);
 }
 
 function handleDirectionInput(direction) {
-  if (state.paused || state.stageLocked || state.mode !== "direction") return;
+  if (state.mode !== "direction" || state.stageLocked || state.paused) return;
   const expected = state.directionSequence[state.directionIndex];
-  const pressed = ui.playfield.querySelector(`.direction-key[data-direction="${direction}"]`);
-  if (pressed) {
-    pressed.classList.remove("pressed", "wrong");
-    void pressed.offsetWidth;
-    pressed.classList.add(direction === expected ? "pressed" : "wrong");
-    setTimeout(() => pressed.classList.remove("pressed", "wrong"), 260);
+  const key = ui.playfield.querySelector(`[data-direction="${direction}"]`);
+  if (key) {
+    key.classList.remove("pressed", "wrong");
+    void key.offsetWidth;
+    key.classList.add(direction === expected ? "pressed" : "wrong");
   }
   if (direction !== expected) {
-    if (!loseHeart()) setTimeout(renderDirection, 360);
+    failChallenge();
     return;
   }
   state.directionIndex += 1;
+  playTone("tap");
   renderDirectionProgress();
-  if (state.directionIndex === state.directionSequence.length) completeChallenge(46 + state.round * 6);
+  if (state.directionIndex === state.directionSequence.length) completeChallenge();
 }
 
-function renderDirection() {
-  clearTimers();
-  ui.timerTitle.textContent = "방향 입력 타이머";
-  ui.playfield.innerHTML = "";
-  const length = Math.min(6, 5 + Math.floor((state.round - 1) / 2) + (state.round >= 5 ? Math.ceil(state.finalLevel / 3) : 0));
-  state.directionSequence = Array.from({ length }, () => randomItem(Object.keys(DIRECTION_INFO)));
+function renderDirection(config) {
+  state.directionSequence = Array.from({ length: config.length }, () => randomItem(Object.keys(DIRECTION_INFO)));
   state.directionIndex = 0;
-  const game = document.createElement("div"); game.className = "direction-game";
-  const sequence = document.createElement("div"); sequence.className = "direction-sequence"; sequence.setAttribute("aria-label", "입력할 방향 순서");
-  state.directionSequence.forEach((direction, index) => {
-    const chip = document.createElement("span"); chip.className = "direction-chip"; chip.dataset.index = index; chip.textContent = DIRECTION_INFO[direction].symbol; chip.setAttribute("aria-label", DIRECTION_INFO[direction].label); sequence.appendChild(chip);
+  const game = document.createElement("div");
+  game.className = "direction-game";
+  const sequence = document.createElement("div");
+  sequence.className = "direction-sequence";
+  sequence.setAttribute("aria-label", "입력할 방향 순서");
+  state.directionSequence.forEach((direction) => {
+    const chip = document.createElement("span");
+    chip.className = "direction-chip";
+    chip.textContent = DIRECTION_INFO[direction].symbol;
+    chip.setAttribute("aria-label", DIRECTION_INFO[direction].label);
+    sequence.appendChild(chip);
   });
-  const pad = document.createElement("div"); pad.className = "direction-pad"; pad.setAttribute("aria-label", "방향 입력 버튼");
+  const pad = document.createElement("div");
+  pad.className = "direction-pad";
   Object.entries(DIRECTION_INFO).forEach(([direction, info]) => {
-    const button = document.createElement("button"); button.type = "button"; button.className = "direction-key"; button.dataset.direction = direction; button.textContent = info.symbol; button.setAttribute("aria-label", info.label); button.addEventListener("click", () => handleDirectionInput(direction)); pad.appendChild(button);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "direction-key";
+    button.dataset.direction = direction;
+    button.textContent = info.symbol;
+    button.setAttribute("aria-label", info.label);
+    button.addEventListener("click", () => handleDirectionInput(direction));
+    pad.appendChild(button);
   });
-  game.append(sequence, pad); ui.playfield.appendChild(game); renderDirectionProgress();
-  startReactionTimer(directionLimitMs(), () => { if (!loseHeart()) renderDirection(); });
+  game.append(sequence, pad);
+  ui.playfield.appendChild(game);
+  renderDirectionProgress();
+  startTimer(config.limitMs, "궤도 입력 제한시간", () => failChallenge({ timeout: true }));
+}
+
+function tokenElement(token, className = "signal-token") {
+  const element = document.createElement("span");
+  element.className = `${className} token-${token.color} token-${token.shape}`;
+  element.setAttribute("aria-hidden", "true");
+  return element;
+}
+
+function signalLabel(token) {
+  const colors = { cyan: "청록", violet: "보라", coral: "주황" };
+  const shapes = { circle: "원", diamond: "마름모", triangle: "삼각형" };
+  return `${colors[token.color]} ${shapes[token.shape]}`;
+}
+
+function renderSwitch(config) {
+  let trialIndex = 0;
+  const previousRules = [];
+  const game = document.createElement("div");
+  game.className = "switch-game";
+  const ruleBanner = document.createElement("div");
+  ruleBanner.className = "rule-banner";
+  const reference = document.createElement("div");
+  reference.className = "signal-reference";
+  const candidates = document.createElement("div");
+  candidates.className = "signal-candidates";
+  game.append(ruleBanner, reference, candidates);
+  ui.playfield.appendChild(game);
+  const showTrial = () => {
+    const trial = createSignalTrial({ level: state.difficulty, previousRules, rng: Math.random });
+    previousRules.push(trial.rule);
+    const ruleText = trial.rule === "color" ? "색 맞추기" : "모양 맞추기";
+    ruleBanner.textContent = ruleText;
+    ruleBanner.classList.add("switching");
+    reference.innerHTML = "<small>기준 신호</small>";
+    reference.appendChild(tokenElement(trial.reference));
+    reference.setAttribute("aria-label", `기준 신호 ${signalLabel(trial.reference)}`);
+    candidates.innerHTML = "";
+    trial.candidates.forEach((candidate) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "signal-choice";
+      button.disabled = true;
+      button.dataset.candidate = candidate.id;
+      button.setAttribute("aria-label", signalLabel(candidate));
+      button.appendChild(tokenElement(candidate));
+      button.addEventListener("click", () => {
+        if (!isSignalAnswerCorrect(trial, candidate.id)) {
+          button.classList.add("wrong");
+          failChallenge();
+          return;
+        }
+        trialIndex += 1;
+        setAttemptProgress(trialIndex, config.trials);
+        playTone("tap");
+        if (trialIndex >= config.trials) completeChallenge();
+        else showTrial();
+      });
+      candidates.appendChild(button);
+    });
+    setAttemptProgress(trialIndex, config.trials);
+    announce(`현재 규칙 ${ruleText}. 기준은 ${signalLabel(trial.reference)}.`);
+    later(() => {
+      ruleBanner.classList.remove("switching");
+      candidates.querySelectorAll("button").forEach((button) => { button.disabled = false; });
+      candidates.querySelector("button")?.focus({ preventScroll: true });
+    }, 500);
+  };
+  showTrial();
+  startTimer(config.limitMs, "신호 전환 제한시간", () => failChallenge({ timeout: true }));
+}
+
+function trailDirections(path, size) {
+  const labels = [];
+  for (let index = 1; index < path.length; index += 1) {
+    const delta = path[index] - path[index - 1];
+    labels.push(delta === 1 ? "오른쪽" : delta === -1 ? "왼쪽" : delta === size ? "아래" : "위");
+  }
+  return labels.join(", ");
+}
+
+function renderTrail(config) {
+  const path = createStarPath({ size: config.size, length: config.length, rng: Math.random });
+  let inputIndex = 0;
+  const grid = document.createElement("div");
+  grid.className = "trail-grid";
+  grid.style.setProperty("--trail-size", config.size);
+  const cells = Array.from({ length: config.size * config.size }, (_, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "trail-cell";
+    button.dataset.cell = index;
+    button.disabled = true;
+    button.tabIndex = -1;
+    button.setAttribute("aria-label", `${Math.floor(index / config.size) + 1}행 ${index % config.size + 1}열`);
+    button.addEventListener("click", () => {
+      if (!isStarStepCorrect(path, inputIndex, index)) {
+        button.classList.add("wrong");
+        failChallenge();
+        return;
+      }
+      button.classList.add("correct");
+      button.textContent = "✦";
+      inputIndex += 1;
+      setAttemptProgress(inputIndex, path.length);
+      playTone("tap");
+      if (inputIndex === path.length) completeChallenge();
+    });
+    button.addEventListener("keydown", (event) => {
+      if (!Object.hasOwn(DIRECTION_INFO, event.key)) return;
+      event.preventDefault();
+      const row = Math.floor(index / config.size);
+      const column = index % config.size;
+      const nextRow = event.key === "ArrowUp" ? row - 1 : event.key === "ArrowDown" ? row + 1 : row;
+      const nextColumn = event.key === "ArrowLeft" ? column - 1 : event.key === "ArrowRight" ? column + 1 : column;
+      if (nextRow < 0 || nextRow >= config.size || nextColumn < 0 || nextColumn >= config.size) return;
+      const next = nextRow * config.size + nextColumn;
+      cells.forEach((cell) => { cell.tabIndex = -1; });
+      cells[next].tabIndex = 0;
+      cells[next].focus();
+    });
+    grid.appendChild(button);
+    return button;
+  });
+  ui.playfield.appendChild(grid);
+  setAttemptProgress(0, path.length);
+  path.forEach((cellIndex, index) => {
+    later(() => {
+      cells[cellIndex].classList.add("revealed");
+      cells[cellIndex].textContent = String(index + 1);
+      announce(`${index + 1}번째, ${cells[cellIndex].getAttribute("aria-label")}`);
+    }, index * config.revealMs);
+    later(() => {
+      cells[cellIndex].classList.remove("revealed");
+      cells[cellIndex].textContent = "";
+    }, index * config.revealMs + Math.round(config.revealMs * 0.72));
+  });
+  later(() => {
+    const start = path[0];
+    cells.forEach((cell) => { cell.disabled = false; });
+    cells[start].classList.add("start");
+    cells[start].textContent = "시작";
+    cells[start].tabIndex = 0;
+    cells[start].focus({ preventScroll: true });
+    const row = Math.floor(start / config.size) + 1;
+    const column = start % config.size + 1;
+    announce(`시작은 ${row}행 ${column}열. 이후 ${trailDirections(path, config.size)}.`);
+    setSpeech("이제 따라가요", "시작 칸부터 기억한 길을 입력해요.");
+    startTimer(config.limitMs, "별길 입력 제한시간", () => failChallenge({ timeout: true }));
+  }, path.length * config.revealMs + 220);
 }
 
 function showResults() {
-  clearTimers();
+  clearStageTimers();
+  stopTones();
   stopMusic(ui.gameMusic);
-  hideReactionTimer();
-  const average = (key) => Math.min(99, 50 + state.stats[key] * 8 + Math.floor(Math.random() * 12));
-  ui.resultScore.textContent = String(state.score).padStart(4, "0");
+  state.stageToken += 1;
+  state.stageLocked = true;
+  hideTimer();
+  if (!state.runFinalized) {
+    finalizeRun(profile, {
+      score: state.score, bestCombo: state.bestCombo, round: state.round, finalLevel: state.finalLevel,
+      endedAt: new Date().toISOString(), modes: state.runStats
+    });
+    state.runFinalized = true;
+    storagePersistent = writeProfile(storage, profile);
+  }
+  ui.resultScore.textContent = formatScore(state.score);
   ui.resultCombo.textContent = `x${state.bestCombo}`;
-  ui.resultFocus.textContent = average("focus"); ui.resultMemory.textContent = average("memory"); ui.resultPattern.textContent = average("pattern"); ui.resultDirection.textContent = average("direction");
-  ui.resultMessage.textContent = state.round >= 5 ? "마지막 라운드까지 도전했어요. 루미가 당신의 기록을 기억할게요." : "다음에는 더 멀리 도전해봐요. 루미가 기다리고 있을게요.";
+  ui.resultRound.textContent = state.round < 5 ? `라운드 ${state.round}` : `최종 ${state.finalLevel}`;
+  ui.resultBestScore.textContent = profile.records.bestScore;
+  ui.resultBestCombo.textContent = `x${profile.records.bestCombo}`;
+  MODE_IDS.forEach((mode) => {
+    const row = ui.resultRows[mode];
+    const stat = state.runStats[mode];
+    const accuracy = accuracyFor(stat);
+    row.querySelector("strong").textContent = accuracy === null ? "—" : `${accuracy}%`;
+    row.querySelector("small").textContent = `오류 ${stat.errors} · 시간초과 ${stat.timeouts}`;
+  });
+  const attempted = MODE_IDS.filter((mode) => state.runStats[mode].attempts > 0);
+  const recommendation = attempted.sort((a, b) => weaknessFor(profile.modes[b]) - weaknessFor(profile.modes[a]))[0];
+  ui.resultRecommendation.textContent = recommendation
+    ? `루미의 다음 추천 · ${MODE_UI[recommendation].title} — 실수한 흐름을 한 단계 편하게 다시 연습해요.`
+    : "루미의 다음 추천은 첫 문제를 마치면 준비돼요.";
+  ui.saveStatus.textContent = storagePersistent ? "이 기기에 기록했어요." : "이번 결과는 표시되지만 이 기기에는 저장하지 못했어요.";
+  ui.saveStatus.classList.toggle("save-failed", !storagePersistent);
+  updateHomeRecords();
   showScreen("result");
+  announce(`도전 완료. 최종 점수 ${state.score}, 최고 콤보 ${state.bestCombo}. ${ui.saveStatus.textContent}`);
 }
 
-function shareResult() {
-  const text = `LUMI'S MIND ARCADE\n총점 ${state.score} · 최고 콤보 x${state.bestCombo}\n루미와 함께 다시 도전해보세요!`;
-  if (navigator.share) navigator.share({ title: "LUMI’S MIND ARCADE", text }).catch(() => {});
-  else if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => showToast("기록을 클립보드에 복사했어요."));
-  else showToast("기록 공유 준비 완료!");
+function goHome() {
+  clearStageTimers();
+  stopTones();
+  stopMusic(ui.gameMusic);
+  state.stageToken += 1;
+  state.paused = false;
+  if (ui.pauseOverlay.open) ui.pauseOverlay.close();
+  pauseReturnFocus = null;
+  updateHomeRecords();
+  showScreen("home");
+  startHomeMusic();
 }
 
-function showToast(message) { ui.toast.textContent = message; ui.toast.classList.add("visible"); setTimeout(() => ui.toast.classList.remove("visible"), 2200); }
-function setMusicUi(isPlaying) {
-  ui.musicToggle.setAttribute("aria-pressed", String(isPlaying));
-  ui.musicToggle.setAttribute("aria-label", isPlaying ? "배경음악 끄기" : "배경음악 켜기");
-  ui.musicToggle.textContent = isPlaying ? "♫ 음악 끄기" : "♫ 음악 켜기";
-  ui.musicToggle.classList.toggle("is-playing", isPlaying);
-}
-function startHomeMusic() {
-  if (!musicEnabled) return;
-  ui.homeMusic.volume = 0.28;
-  const playRequest = ui.homeMusic.play();
-  if (playRequest && typeof playRequest.then === "function") playRequest.then(() => setMusicUi(true)).catch(() => setMusicUi(false));
-}
-function startGameMusic() {
-  if (!musicEnabled) return;
-  ui.gameMusic.volume = 0.24;
-  const playRequest = ui.gameMusic.play();
-  if (playRequest && typeof playRequest.then === "function") playRequest.catch(() => {});
-}
-function stopMusic(audio) { audio.pause(); audio.currentTime = 0; }
-function toggleMusic() {
-  if (ui.homeMusic.paused) { musicEnabled = true; startHomeMusic(); }
-  else { musicEnabled = false; ui.homeMusic.pause(); ui.gameMusic.pause(); setMusicUi(false); }
-}
-function togglePause() {
-  state.paused = !state.paused;
-  if (state.paused) clearTimers();
-  else if (state.mode === "focus") renderFocus();
-  else if (state.mode === "memory") renderMemory();
-  else if (state.mode === "pattern") renderPattern();
-  else renderDirection();
-  ui.pause.textContent = state.paused ? "▶" : "Ⅱ";
-  showToast(state.paused ? "잠시 멈췄어요." : "다시 시작할게요.");
+function togglePause(forceResume = false) {
+  if (!canPauseStage({ gameActive: screens.game.classList.contains("active"), stageLocked: state.stageLocked })) return;
+  if (!state.paused && !forceResume) {
+    state.paused = true;
+    state.stageToken += 1;
+    clearStageTimers();
+    stopTones();
+    const active = document.activeElement;
+    pauseReturnFocus = active instanceof HTMLElement && active.matches("button, [href], [tabindex]:not([tabindex='-1'])") ? active : ui.pause;
+    ui.pauseOverlay.showModal();
+    ui.resume.focus();
+    announce("일시정지. 재개하면 현재 문제를 새로 시작합니다.");
+    return;
+  }
+  state.paused = false;
+  ui.pauseOverlay.close();
+  renderCurrentMode();
+  const focusTarget = pauseReturnFocus?.isConnected ? pauseReturnFocus : ui.pause;
+  pauseReturnFocus = null;
+  focusTarget.focus();
+  announce("게임을 재개합니다. 현재 모드의 새 문제입니다.");
 }
 
-ui.start.addEventListener("click", startGame); ui.retry.addEventListener("click", startGame); ui.dialogStart.addEventListener("click", () => { ui.dialog.close(); startGame(); });
-ui.home.addEventListener("click", () => { clearTimers(); stopMusic(ui.gameMusic); showScreen("home"); startHomeMusic(); }); ui.resultHome.addEventListener("click", () => { clearTimers(); stopMusic(ui.gameMusic); showScreen("home"); startHomeMusic(); }); ui.pause.addEventListener("click", togglePause); ui.share.addEventListener("click", shareResult);
-ui.musicToggle.addEventListener("click", toggleMusic);
+async function shareResult() {
+  const reached = state.round < 5 ? `라운드 ${state.round}` : `최종 ${state.finalLevel}`;
+  const text = `LUMI’S MIND ARCADE\n총점 ${state.score} · 최고 콤보 x${state.bestCombo} · ${reached}`;
+  if (navigator.share) {
+    try { await navigator.share({ title: "LUMI’S MIND ARCADE", text }); return; }
+    catch (error) { if (error.name === "AbortError") return; }
+  }
+  if (navigator.clipboard) {
+    try { await navigator.clipboard.writeText(text); showToast("결과를 클립보드에 복사했어요."); return; }
+    catch { /* Fall through to selectable text. */ }
+  }
+  window.prompt("아래 결과를 복사하세요.", text);
+}
+
+ui.start.addEventListener("click", startGame);
+ui.retry.addEventListener("click", startGame);
+ui.dialogStart.addEventListener("click", () => { ui.dialog.close(); startGame(); });
+ui.home.addEventListener("click", goHome);
+ui.resultHome.addEventListener("click", goHome);
+ui.pause.addEventListener("click", () => togglePause());
+ui.resume.addEventListener("click", () => togglePause(true));
+ui.pauseOverlay.addEventListener("cancel", (event) => { event.preventDefault(); togglePause(true); });
+ui.share.addEventListener("click", shareResult);
+ui.howTo.addEventListener("click", () => ui.dialog.showModal());
+ui.closeDialog.addEventListener("click", () => ui.dialog.close());
+ui.music.addEventListener("click", toggleMusic);
 screens.home.addEventListener("pointerdown", (event) => { if (!event.target.closest("#music-toggle")) startHomeMusic(); });
-ui.howTo.addEventListener("click", () => ui.dialog.showModal()); ui.closeDialog.addEventListener("click", () => ui.dialog.close());
-screens.home.addEventListener("pointermove", updateHomeParallax); screens.home.addEventListener("pointerleave", resetHomeParallax);
-ui.homeLumi.addEventListener("click", () => wakeHomeLumi()); ui.homeLumi.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); wakeHomeLumi(); } });
-ui.modeCards.forEach((card) => {
-  card.addEventListener("pointerenter", () => previewMode(card));
-  card.addEventListener("pointerleave", () => { card.classList.remove("previewing"); setHomeLumiState(1); });
+screens.home.addEventListener("click", (event) => {
+  if (screens.home.classList.contains("active") && !event.target.closest("#music-toggle")) startHomeMusic();
 });
-window.addEventListener("keydown", (event) => { if (event.key === "Escape" && ui.dialog.open) ui.dialog.close(); if (event.key === "p" && screens.game.classList.contains("active")) togglePause(); if (screens.game.classList.contains("active") && state.mode === "direction" && event.key in DIRECTION_INFO) { event.preventDefault(); handleDirectionInput(event.key); } });
+ui.homeLumi.addEventListener("click", () => {
+  const next = (Number(ui.homeLumi.className.match(/state-(\d)/)?.[1] || 1) + 1) % 5;
+  setLumi(ui.homeLumi, next);
+  playTone("success");
+  showToast("루미가 오늘의 도전을 응원해요!");
+});
+ui.modeCards.forEach((card) => {
+  card.addEventListener("pointerenter", () => setLumi(ui.homeLumi, MODE_UI[card.dataset.mode].lumi));
+  card.addEventListener("pointerleave", () => setLumi(ui.homeLumi, 1));
+});
 
-ui.score.textContent = formatScore(0); renderHearts(); setMusicUi(false); startHomeMusic();
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && ui.dialog.open) { ui.dialog.close(); return; }
+  if (event.key.toLowerCase() === "p" && screens.game.classList.contains("active")) { event.preventDefault(); togglePause(); return; }
+  if (screens.game.classList.contains("active") && state.mode === "direction" && Object.hasOwn(DIRECTION_INFO, event.key)) {
+    event.preventDefault();
+    handleDirectionInput(event.key);
+  }
+});
+
+ui.score.textContent = formatScore(0);
+renderHearts();
+setMusicUi(false);
+updateHomeRecords();
+showScreen("home");
+startHomeMusic();

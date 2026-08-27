@@ -2,168 +2,102 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#060a2a" />
-    <meta name="description" content="실수를 기억하는 3분 웹 아케이드, LUMI'S MIND ARCADE" />
-    <title>LUMI'S MIND ARCADE</title>
-    <link rel="stylesheet" href="./styles.css?v=13" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#070a24" />
+    <meta name="description" content="루미가 실수를 기억하고 다음 도전을 맞춰주는 6가지 두뇌 미니게임 아케이드" />
+    <title>LUMI’S MIND ARCADE</title>
+    <link rel="icon" href="./public/assets/lumi-sprite-sheet.png?v=5" />
+    <link rel="stylesheet" href="./styles.css?v=22" />
   </head>
   <body>
-    <main class="app-shell">
-      <div class="stars stars-one" aria-hidden="true"></div>
-      <div class="stars stars-two" aria-hidden="true"></div>
+    <a class="skip-link" href="#app-content">게임 본문으로 건너뛰기</a>
+    <main id="app-content" class="app-shell">
+      <div class="stars" aria-hidden="true"></div>
 
-      <section id="home-screen" class="screen active" aria-labelledby="game-title">
+      <section id="home-screen" class="screen active home-screen" aria-labelledby="game-title">
         <div class="home-copy">
-          <div class="brand-lockup">
-            <span class="brand-word">LUMI’S</span>
-            <span class="brand-subword">MIND ARCADE</span>
+          <p class="home-eyebrow">3분 · 5라운드 · 6가지 두뇌 미니게임</p>
+          <p class="brand">LUMI’S <span>MIND ARCADE</span></p>
+          <h1 id="game-title">마음의 퍼즐,<br /><span>집중의 즐거움</span></h1>
+          <p class="home-support">루미가 실수를 기억하고 다음 도전을 알맞게 조율해요.</p>
+          <div class="home-actions">
+            <button id="start-button" class="primary-button" type="button"><span aria-hidden="true">▶</span> 게임 시작</button>
+            <button id="how-to-button" class="secondary-button" type="button">플레이 방법</button>
           </div>
-          <p class="home-eyebrow">3분 · 5라운드 · 3가지 두뇌 미니게임</p>
-          <p class="home-tagline"><strong>마음의 퍼즐,<br />집중의 즐거움</strong></p>
-          <p class="home-support">두뇌를 깨우는 3가지 모드</p>
-          <button id="start-button" class="primary-button" type="button"><span class="button-play" aria-hidden="true">▶</span>게임 시작</button>
-          <button id="how-to-button" class="secondary-button" type="button">플레이 방법</button>
-          <div class="mode-row" aria-label="미니게임 종류">
-            <div class="mode-card mode-focus" data-lumi-state="2">
-              <span class="mode-icon target-icon" aria-hidden="true"></span>
-              <strong>집중 모드</strong>
-              <small>빠르게 맞추기</small>
-            </div>
-            <div class="mode-card mode-memory" data-lumi-state="1">
-              <span class="mode-icon memory-icon" aria-hidden="true">✦</span>
-              <strong>기억 모드</strong>
-              <small>순서를 기억하기</small>
-            </div>
-            <div class="mode-card mode-pattern" data-lumi-state="3">
-              <span class="mode-icon pattern-icon" aria-hidden="true">◇</span>
-              <strong>패턴 모드</strong>
-              <small>규칙을 찾아내기</small>
-            </div>
-            <div class="mode-card mode-direction" data-lumi-state="4">
-              <span class="mode-icon direction-icon" aria-hidden="true">↕</span>
-              <strong>방향 모드</strong>
-              <small>순서 입력하기</small>
-            </div>
+          <div id="record-summary" class="record-summary is-hidden" aria-label="이 기기의 최고 기록">
+            <span>이 기기의 기록</span><strong>최고 <b id="home-best-score">0</b>점</strong>
+            <small>최고 콤보 <b id="home-best-combo">x0</b> · 완료 <b id="home-total-runs">0</b>판</small>
           </div>
-          <div class="home-tip"><span class="tip-icon">✦</span><div><strong>오늘의 팁</strong><small>완벽보다 꾸준함이 더 중요해요!</small></div><span class="tip-arrow">›</span></div>
+          <div class="mode-grid" aria-label="여섯 가지 미니게임">
+            <article class="mode-card mode-focus" data-mode="focus"><span aria-hidden="true">◎</span><div><strong>별빛 포착</strong><small>움직이는 목표를 빠르게</small></div></article>
+            <article class="mode-card mode-memory" data-mode="memory"><span aria-hidden="true">✦</span><div><strong>빛 순서</strong><small>반짝인 순서를 기억해요</small></div></article>
+            <article class="mode-card mode-pattern" data-mode="pattern"><span aria-hidden="true">◇</span><div><strong>균열 탐색</strong><small>규칙이 다른 하나 찾기</small></div></article>
+            <article class="mode-card mode-direction" data-mode="direction"><span aria-hidden="true">↕</span><div><strong>궤도 입력</strong><small>방향을 순서대로 입력</small></div></article>
+            <article class="mode-card mode-switch" data-mode="switch"><span aria-hidden="true">⇄</span><div><strong>신호 전환</strong><small>지금 규칙에 맞춰 선택</small></div></article>
+            <article class="mode-card mode-trail" data-mode="trail"><span aria-hidden="true">✧</span><div><strong>별길 추적</strong><small>빛난 경로를 다시 그려요</small></div></article>
+          </div>
+          <p class="home-tip"><span aria-hidden="true">✦</span><strong>오늘의 팁</strong> 실수는 다음 문제를 더 잘 맞추는 단서예요.</p>
         </div>
-
         <div class="home-world" aria-label="루미의 별빛 공간">
-          <div class="portal portal-large"></div>
-          <div class="lumi-ground-glow" aria-hidden="true"></div>
-          <div id="home-lumi" class="lumi-sprite lumi-home state-1" role="button" tabindex="0" aria-label="루미를 깨워요"></div>
-          <div class="orbital-line orbital-one"></div>
-          <div class="orbital-line orbital-two"></div>
+          <div class="portal" aria-hidden="true"></div><div class="lumi-ground" aria-hidden="true"></div>
+          <button id="home-lumi" class="lumi-sprite lumi-home state-1" type="button" aria-label="루미에게 인사하기"></button>
         </div>
-
-        <div class="home-controls">
-          <div class="home-badge"><span class="gem-dot"></span> 5라운드 도전</div>
-          <button id="music-toggle" class="music-toggle" type="button" aria-pressed="false" aria-label="배경음악 켜기">♫ 음악 켜기</button>
-        </div>
+        <div class="home-controls"><span class="challenge-badge">✦ 5라운드 도전</span><button id="music-toggle" class="music-toggle" type="button" aria-pressed="false" aria-label="배경음악 켜기">♫ 음악 켜기</button></div>
       </section>
 
-      <section id="game-screen" class="screen" aria-labelledby="game-status-title">
+      <section id="game-screen" class="screen game-screen" aria-labelledby="game-status-title">
         <header class="game-header">
-          <button id="home-button" class="icon-button" type="button" aria-label="홈으로 돌아가기">⌂</button>
-          <div class="round-status">
-            <small>라운드</small>
-            <strong id="round-label">3 / 5</strong>
-          </div>
-          <div class="mode-status">
-            <span class="mode-hud-icon target-icon" aria-hidden="true"></span>
-            <div><small>모드</small><strong id="game-status-title">집중 모드</strong></div>
-          </div>
-          <div class="stage-status">
-            <span>스테이지</span><strong id="stage-label">1 / 3</strong>
-          </div>
-          <div class="score-status"><span>점수</span><strong id="score-label">000</strong></div>
+          <button id="home-button" class="icon-button" type="button" aria-label="진행을 끝내고 홈으로">⌂</button>
+          <div class="hud-chip"><small>라운드</small><strong id="round-label">1 / 5</strong></div>
+          <div class="hud-chip mode-chip"><small>모드</small><strong id="game-status-title">별빛 포착</strong></div>
+          <div class="hud-chip stage-chip"><small>스테이지</small><strong id="stage-label">1 / 3</strong></div>
+          <div class="hud-chip score-chip"><small>점수</small><strong id="score-label">0000</strong></div>
+          <div class="hud-chip combo-chip"><small>콤보</small><strong id="combo-label">x0</strong></div>
           <div id="hearts" class="hearts" aria-label="남은 하트 5개"></div>
           <button id="pause-button" class="icon-button" type="button" aria-label="일시정지">Ⅱ</button>
         </header>
-
         <div class="game-layout">
-          <section class="playfield-panel">
-            <div class="instruction-row">
-              <p id="instruction-label">목표를 클릭하세요</p>
-              <span id="combo-label" class="combo-label">콤보 x0</span>
-            </div>
-            <div id="playfield" class="playfield" aria-live="polite"></div>
-            <div id="timer-panel" class="timer-panel is-hidden" aria-live="polite">
-              <div class="timer-copy"><span id="timer-title">순발력 챌린지</span><strong id="timer-label">5.0초</strong></div>
-              <div class="timer-track"><span id="timer-bar"></span></div>
-            </div>
-            <div class="progress-caption"><span>◷</span><strong>목표 진행</strong><em id="round-progress-label">0%</em></div>
-            <div class="progress-track"><span id="progress-bar" class="progress-bar"></span></div>
-            <div class="round-hint"><span class="hint-star">✦</span><span id="hint-text">실수하면 하트가 하나 줄어요.</span></div>
-            <div class="stage-tracker" aria-label="이번 라운드 3개 게임">
-              <span class="stage-step active" data-stage-step="0"><b>1</b><span>집중</span></span>
-              <i aria-hidden="true">›</i>
-              <span class="stage-step" data-stage-step="1"><b>2</b><span>기억</span></span>
-              <i aria-hidden="true">›</i>
-              <span class="stage-step" data-stage-step="2"><b>3</b><span>패턴</span></span>
-            </div>
+          <section class="playfield-panel" aria-labelledby="instruction-label">
+            <div class="instruction-row"><div><span id="difficulty-label" class="difficulty-label">난이도 1</span><h2 id="instruction-label">빛나는 목표를 찾으세요</h2></div><span id="attempt-progress" class="attempt-progress">0 / 2</span></div>
+            <div id="playfield" class="playfield" role="region" aria-label="현재 미니게임"></div>
+            <div id="timer-panel" class="timer-panel is-hidden" aria-label="남은 시간"><div><span id="timer-title">남은 시간</span><strong id="timer-label">6.0초</strong></div><div class="timer-track"><span id="timer-bar"></span></div><small id="timer-warning" class="timer-warning"></small></div>
+            <div class="progress-caption"><span>라운드 진행</span><strong id="round-progress-label">0%</strong></div><div class="progress-track"><span id="progress-bar"></span></div>
+            <p class="round-hint"><span aria-hidden="true">✦</span><span id="hint-text">실수하면 하트가 하나 줄어요.</span></p>
+            <div class="stage-tracker" aria-label="이번 라운드 스테이지"><span class="stage-step active" data-stage-step="0"><b>1</b><span>대기</span></span><i aria-hidden="true">›</i><span class="stage-step" data-stage-step="1"><b>2</b><span>대기</span></span><i aria-hidden="true">›</i><span class="stage-step" data-stage-step="2"><b>3</b><span>대기</span></span></div>
           </section>
-
-          <aside class="companion-panel">
-            <div class="companion-title"><span>나의 파트너</span></div>
-            <div id="game-lumi" class="lumi-sprite lumi-game state-0" role="img" aria-label="루미"></div>
-            <div class="speech-bubble"><strong id="speech-title">준비됐나요?</strong><span id="speech-text">천천히 시작해봐요.</span></div>
-            <div class="partner-modes" aria-label="인지 모드 지표">
-              <span><i class="target-icon" aria-hidden="true"></i>집중</span>
-              <span><i class="memory-icon" aria-hidden="true">✦</i>기억</span>
-              <span><i class="pattern-icon" aria-hidden="true">◇</i>패턴</span>
-              <span><i class="direction-icon" aria-hidden="true">↕</i>방향</span>
-            </div>
-            <div class="round-meter"><span id="round-meter-fill"></span></div>
+          <aside class="companion-panel" aria-label="루미의 안내">
+            <p class="companion-title">MY PARTNER · LUMI</p><div id="game-lumi" class="lumi-sprite lumi-game state-0" role="img" aria-label="루미"></div>
+            <div class="speech-bubble"><strong id="speech-title">준비됐나요?</strong><span id="speech-text">한 문제씩 차분하게 시작해요.</span></div>
+            <div id="partner-modes" class="partner-modes" aria-label="모드 상태"><span data-partner-mode="focus">◎<small>집중</small></span><span data-partner-mode="memory">✦<small>기억</small></span><span data-partner-mode="pattern">◇<small>패턴</small></span><span data-partner-mode="direction">↕<small>방향</small></span><span data-partner-mode="switch">⇄<small>전환</small></span><span data-partner-mode="trail">✧<small>별길</small></span></div>
+            <div class="round-meter" aria-hidden="true"><span id="round-meter-fill"></span></div>
           </aside>
         </div>
+        <dialog id="pause-overlay" class="pause-overlay" aria-labelledby="pause-title"><div><span aria-hidden="true">Ⅱ</span><h2 id="pause-title">잠시 멈췄어요</h2><p>재개하면 현재 문제를 새로 시작해요.<br />하트와 콤보는 그대로예요.</p><button id="resume-button" class="primary-button" type="button">계속하기</button></div></dialog>
       </section>
 
-      <section id="result-screen" class="screen" aria-labelledby="result-title">
-        <div class="result-world" aria-hidden="true">
-          <div class="result-portal"></div>
-          <div class="constellation constellation-a"></div>
-          <div class="constellation constellation-b"></div>
-          <div class="lumi-sprite lumi-result state-4"></div>
-        </div>
+      <section id="result-screen" class="screen result-screen" aria-labelledby="result-title">
+        <div class="result-world" aria-hidden="true"><div class="result-portal"></div><div class="lumi-sprite lumi-result state-4"></div></div>
         <div class="result-panel">
-          <p class="result-kicker">RUN COMPLETE</p>
-          <h1 id="result-title">훌륭해요!<br /><span>라운드 클리어</span></h1>
-          <div class="total-score"><span>최종 점수</span><strong id="result-score">0000</strong></div>
-          <div class="result-stats">
-            <div><span>집중력</span><strong id="result-focus">0</strong><small>우수</small></div>
-            <div><span>기억력</span><strong id="result-memory">0</strong><small>양호</small></div>
-            <div><span>패턴 인식</span><strong id="result-pattern">0</strong><small>최고</small></div>
-            <div><span>방향 감각</span><strong id="result-direction">0</strong><small>도전</small></div>
-          </div>
-          <div class="result-record"><span>✦</span><div><strong>도전 기록 저장 완료!</strong><small>최고 콤보 <b id="result-combo">x0</b> · 더 높은 목표를 향해 나아가요!</small></div></div>
-          <div class="result-actions">
-            <button id="retry-button" class="primary-button" type="button"><span class="button-symbol" aria-hidden="true">↻</span>다시 도전</button>
-            <button id="share-button" class="secondary-button" type="button"><span class="button-symbol" aria-hidden="true">⌯</span>결과 공유</button>
-          </div>
-          <button id="result-home-button" class="result-home-button" type="button">메인으로 돌아가기</button>
-          <p id="result-message" class="result-message">루미가 당신의 도전을 기억할게요.</p>
+          <p class="result-kicker">RUN COMPLETE</p><h1 id="result-title">루미가 이번 도전을<br /><span>기억했어요</span></h1>
+          <div class="result-summary"><div class="total-score"><span>최종 점수</span><strong id="result-score">0000</strong></div><div><span>이번 최고 콤보</span><strong id="result-combo">x0</strong></div><div><span>도달 지점</span><strong id="result-round">라운드 1</strong></div></div>
+          <div class="local-bests"><span>이 기기 최고 점수 <b id="result-best-score">0</b></span><span>최고 콤보 <b id="result-best-combo">x0</b></span></div>
+          <h2>이번 판 정확도</h2>
+          <div class="result-stats"><div data-result-mode="focus"><span>집중</span><strong>—</strong><small>오류 0</small></div><div data-result-mode="memory"><span>기억</span><strong>—</strong><small>오류 0</small></div><div data-result-mode="pattern"><span>패턴</span><strong>—</strong><small>오류 0</small></div><div data-result-mode="direction"><span>방향</span><strong>—</strong><small>오류 0</small></div><div data-result-mode="switch"><span>전환</span><strong>—</strong><small>오류 0</small></div><div data-result-mode="trail"><span>별길</span><strong>—</strong><small>오류 0</small></div></div>
+          <p id="result-recommendation" class="result-recommendation">루미의 다음 추천을 준비하고 있어요.</p><p id="save-status" class="save-status">저장 상태를 확인하고 있어요.</p>
+          <div class="result-actions"><button id="retry-button" class="primary-button" type="button">↻ 다시 도전</button><button id="share-button" class="secondary-button" type="button">결과 공유</button></div>
+          <button id="result-home-button" class="text-button" type="button">메인으로 돌아가기</button>
         </div>
       </section>
     </main>
 
     <dialog id="how-to-dialog" class="how-to-dialog">
-      <button id="close-how-to" class="dialog-close" type="button" aria-label="닫기">×</button>
-      <p class="result-kicker">HOW TO PLAY</p>
-      <h2>루미와 5라운드를 달려요</h2>
-      <ul>
-        <li>세 가지 미니게임이 랜덤으로 등장해요.</li>
-        <li>틀린 클릭마다 하트가 하나 줄어들어요.</li>
-        <li>라운드가 올라갈수록 속도와 방해 요소가 늘어나요.</li>
-        <li>마지막 라운드는 하트가 모두 사라질 때까지 이어져요.</li>
-      </ul>
-      <button id="dialog-start-button" class="primary-button" type="button">도전 시작</button>
+      <button id="close-how-to" class="dialog-close" type="button" aria-label="닫기">×</button><p class="result-kicker">HOW TO PLAY</p><h2>여섯 모드로 5라운드를 달려요</h2>
+      <ol><li><strong>별빛 포착</strong> — 목표를 연속으로 빠르게 눌러요.</li><li><strong>빛 순서</strong> — 반짝인 카드 순서를 재현해요.</li><li><strong>균열 탐색</strong> — 규칙이 다른 타일 하나를 찾아요.</li><li><strong>궤도 입력</strong> — 보이는 방향을 순서대로 입력해요.</li><li><strong>신호 전환</strong> — 현재의 색·모양 규칙에 맞춰요.</li><li><strong>별길 추적</strong> — 잠깐 빛난 경로를 다시 그려요.</li></ol>
+      <p>첫 두 라운드에서 모든 모드를 만나고, 이후에는 루미가 최근 실수를 참고해 모드와 난이도를 조율해요. 기록은 계정이 아닌 이 브라우저에만 저장돼요.</p><button id="dialog-start-button" class="primary-button" type="button">도전 시작</button>
     </dialog>
-
-    <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <audio id="home-bgm" src="./public/assets/velvet-tide.mp3?v=1" loop autoplay preload="auto" aria-hidden="true"></audio>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div><div id="stage-announcer" class="sr-only" role="status" aria-live="polite"></div>
+    <audio id="home-bgm" src="./public/assets/velvet-tide.mp3?v=1" loop preload="auto" aria-hidden="true"></audio>
     <audio id="game-bgm" src="./public/assets/origami-pavements.mp3?v=1" loop preload="auto" aria-hidden="true"></audio>
-    <script src="./app.js?v=15"></script>
+    <script type="module" src="./app.js?v=23"></script>
   </body>
 </html>

@@ -1,73 +1,46 @@
 # LUMI’S MIND ARCADE — Design QA
 
-## Source visual truth
+## 기준
 
-- Source: `/Users/taeksoojung/.codex/generated_images/019fcb5e-81c0-7aa1-8248-ff42958ebb14/exec-3a763a1b-5abb-496b-9471-22f222d9f42c.png`
-- The source is the user-selected three-state design board: home, round play, and completion.
-- Source pixels: 1672 × 942. It is a composite board, so each state was compared by composition and content rather than as one browser viewport.
+- 기존 루미 스프라이트와 네온 우주 배경의 고유한 시각 언어를 유지했습니다.
+- 시스템 한국어 글꼴 스택, 오리지널 PNG 3개, CSS 도형, 절차적 Web Audio 효과음과 기존 MP3 배경음악 2개만 사용했습니다.
+- 최종 구현 기준 화면은 홈, 6개 미니게임, 일시정지, 도움말, 결과입니다.
 
-## Rendered implementation evidence
+## 2026-08-28 확장 검증
 
-- Home: `/tmp/lumi-home-final.png`
-- Round play: `/tmp/lumi-round-final.png`
-- Completion: `/tmp/lumi-result-ref9.png`
-- Browser viewport: 1624 × 850 CSS px, desktop, device scale factor 1.
-- Mobile spot check: 390 × 844 CSS px.
+### 데스크톱 1440×900
 
-## State and interaction coverage
+- 홈의 6개 모드 카드, 최고 기록, 도움말과 음악 토글을 확인했습니다.
+- 첫 두 라운드를 실제 입력해 별빛 포착, 빛 순서, 균열 탐색, 궤도 입력, 신호 전환, 별길 추적을 모두 성공 완료했습니다.
+- 방향 모드는 실제 방향키, 나머지는 화면 입력으로 검증했습니다.
+- 6모드 완료 뒤 라운드 3 적응 구간 진입, 콤보 증가, 점수 증가를 확인했습니다.
+- 오답 4회를 추가해 하트 0, 결과 이동, 모드별 실제 정확도와 약점 추천을 확인했습니다.
+- 결과의 최고 점수와 최고 콤보가 홈과 새로고침 뒤에도 유지되는 것을 확인했습니다.
+- `P`/일시정지 오버레이와 재개 시 현재 문제 재생성을 확인했습니다.
+- 도움말 열기/닫기와 키보드 포커스 표시를 확인했습니다.
+- 스테이지 성공 뒤 별도 모드명 오버레이나 600ms 인트로 없이 다음 플레이 보드가 직접 나타나는 것을 확인했습니다.
+- 홈 `velvet-tide.mp3`와 게임 `origami-pavements.mp3`의 정지·시작 라우팅, 토글, 자동재생 실패 후 상호작용 재시도 경로를 확인했습니다.
+- 홈의 `5라운드 도전` 배지와 음악 토글은 높이 44px, 위·아래 위치가 정확히 일치하며 배지 문구가 가로·세로 중앙 정렬됩니다.
 
-- Home screen with Korean copy, three mode cards, daily tip, and mascot.
-- Round screen with round/mode/score/heart HUD, interactive playfield, partner rail, progress bar, and heart loss behavior.
-- Completion screen with final score, three cognitive metrics, saved-record banner, retry/share actions, and return-to-home action.
-- Mobile home and round layouts checked at 390 × 844.
-- Browser console checked after local playtest: no errors.
+### 모바일 390×844
 
-## Comparison history
+- 홈과 플레이/일시정지 화면을 실제 브라우저에서 확인했습니다.
+- 문서 가로 폭과 스크롤 폭이 모두 390px이며 가로 넘침이 없습니다.
+- 게임 HUD 버튼과 홈의 주요 버튼은 최소 44px 터치 높이를 유지합니다.
+- `5라운드 도전` 배지와 음악 토글은 같은 44px 높이와 기준선을 유지하고 가로 넘침이 없습니다.
+- 루트 컨테이너가 세로 콘텐츠를 숨기지 않고 문서 스크롤을 사용하며, 게임 HUD가 화면 상단 8px에서 시작하는 것을 확인했습니다.
+- 플레이필드, 타이머, 스테이지 트래커와 루미 안내 패널이 한 열로 읽히는 것을 확인했습니다.
+- 1440px 화면을 200%로 확대한 것과 같은 720×450 CSS 뷰포트에서도 두 홈 컨트롤의 44px 높이와 정렬, 가로 넘침 0px를 확인했습니다.
 
-### First comparison
+### 접근성·오류·자산
 
-- Finding: home was missing the source board’s shortcut row and daily tip; the visual hierarchy was dominated by a large LUMI lockup.
-- Finding: round HUD did not have the source’s explicit round/mode/score/heart grouping, and the companion rail lacked the three small mode indicators.
-- Finding: completion screen used four mixed stat cards and generic “플레이 완료!” copy instead of the source’s three cognitive metrics and “훌륭해요! 라운드 클리어” hierarchy.
+- 모든 핵심 상태에 텍스트 또는 ARIA 이름이 있고 라이브 영역이 성공, 실패, 규칙과 결과를 알립니다.
+- `prefers-reduced-motion: reduce` 미디어 규칙이 화면 전환, 루미, 목표, 규칙 전환과 카드 이동 애니메이션을 제거하도록 확인했습니다.
+- 저장소 예외와 손상 데이터 복구는 Node 테스트로 확인했고, 정상 저장은 실제 브라우저에서 결과→홈→새로고침으로 확인했습니다.
+- 브라우저 경고/오류 로그는 0건입니다.
+- 페이지 자산은 로컬 `styles.css`, `app.js`, `game-core.mjs`, 기존 PNG 3개와 기존 MP3 2개뿐이며 원격 요청, 비디오, 웹폰트는 0건입니다.
+- 두 MP3의 출처·라이선스 메타데이터가 저장소에 없다는 점은 공개 배포 전 확인해야 할 잔여 위험입니다.
 
-### Fixes applied
-
-- Rebuilt the home information hierarchy around “마음의 퍼즐, 집중의 즐거움”, three mode cards, and the tip bar.
-- Added the source-style HUD mode block, progress caption, “나의 파트너” rail, and compact focus/memory/pattern indicators.
-- Reworked completion copy, three metric cards, record banner, action labels, and main-return button.
-- Replaced the mascot sprite with the original five-state crystal mascot asset and aligned its scale/position by state.
-- Fixed screen-transition anchoring so home, round, and completion states open at the top of the viewport.
-
-## Required fidelity surfaces
-
-- Fonts and typography: Korean display hierarchy, compact labels, bold gradient headline treatment, and small utility copy were checked against the source board. The browser uses the existing Pretendard/Apple SD Gothic Neo/system fallback stack.
-- Spacing and layout rhythm: left content column, large right visual field, 4-part round HUD, 2-column play layout, and completion panel spacing were checked at the desktop viewport; responsive adjustments were checked at 390 px.
-- Colors and visual tokens: dark indigo space background, cyan/violet/coral accents, gold score treatment, pink hearts, translucent navy panels, and neon borders are consistently tokenized in `styles.css`.
-- Image quality and asset fidelity: the mascot is an original generated asset processed to transparency; no copied character, logo, or external IP is used.
-- Copy and content: Korean labels match the source intent: 집중 모드, 기억 모드, 패턴 모드, 나의 파트너, 훌륭해요! 라운드 클리어, 최종 점수, 다시 도전, 결과 공유, 메인으로 돌아가기.
-
-## Final result
+## 결과
 
 passed
-
-## Game loop pass — 2026-08-04
-
-- Added a visible `1 / 3` stage HUD and dynamic stage tracker for every round.
-- Each round now runs all three modes exactly once; the tracker reflects the shuffled order.
-- Focus mode has a visible countdown timer: 5.0s → 4.0s → 3.5s → 2.8s → 2.0s by round.
-- Verified pause freezes the timer, five wrong clicks reach `남은 하트 0개`, and the result screen opens.
-- Verified desktop at 1440 × 900 and mobile at 390 × 844.
-- Browser console logs: empty after the tested flows.
-- Memory mode cards are vertically and horizontally centered inside the playfield on desktop and mobile.
-- Removed the low-priority home shortcut row and added a light running-in-place motion to the home mascot.
-- Memory reveal order now randomizes card positions instead of always revealing left-to-right; correct input still advances the stage.
-- Focus mode randomizes target/decoy positions with an active round timer; pattern mode keeps one randomly placed odd tile on the board.
-- Removed the oversized home platform and kept only a subtle ground glow beneath the running mascot.
-- Verified dual music routing: `Velvet_Tide.mp3` on home, `Origami_Pavements.mp3` during gameplay, and clean switching when returning home.
-- Removed the home-world crystal rectangles so the mascot and orbital backdrop remain the visual focus.
-- Refined the gameplay HUD into grouped information chips and verified default music playback with an autoplay fallback.
-- Fixed memory-mode validation to compare clicks against the randomized reveal order; verified a non-linear sequence clears with all five hearts intact.
-- Decoupled memory-card layout order from reveal order so every round presents a different spatial sequence, not a left-to-right playback.
-- Let wide-screen playfields expand vertically to remove the large lower dead zone, and added generated primary/secondary button frames with HTML text overlays.
-- Constrained pattern boards by calculated row/column ratio so every tile stays inside the playfield, and strengthened the single odd tile with a gold glow and marker.
-- Added the direction mode to the randomized three-of-four round pool, with 5–6-arrow sequences, keyboard/mobile input, and round-based timers.
