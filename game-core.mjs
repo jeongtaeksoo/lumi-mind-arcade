@@ -128,6 +128,29 @@ export function accuracyFor(stat) {
   return Math.round(stat.successes / stat.attempts * 100);
 }
 
+export function canPauseStage({ gameActive, stageLocked }) {
+  return gameActive && !stageLocked;
+}
+
+const PATTERN_SHAPES = ["diamond", "circle", "triangle"];
+
+export function createPatternTrial({ count, changes, rng = Math.random }) {
+  const oddIndex = Math.floor(rng() * count);
+  const change = changes[Math.floor(rng() * changes.length)];
+  const baseShapes = change === "rotation" ? ["diamond", "triangle"] : PATTERN_SHAPES;
+  const baseShape = baseShapes[Math.floor(rng() * baseShapes.length)];
+  const otherShapes = PATTERN_SHAPES.filter((shape) => shape !== baseShape);
+  const otherShape = otherShapes[Math.floor(rng() * otherShapes.length)];
+  return { oddIndex, change, baseShape, otherShape };
+}
+
+export function patternTileLabel({ index, tone, shape, rotation }) {
+  const toneLabel = tone === "cyan" ? "청록" : "보라";
+  const shapeLabel = shape === "circle" ? "원" : shape === "triangle" ? "삼각형" : "마름모";
+  const rotationLabel = rotation === "tilted" ? "기울어진" : "반듯한";
+  return `${index + 1}번 ${toneLabel} ${rotationLabel} ${shapeLabel} 타일`;
+}
+
 const SIGNAL_COLORS = ["cyan", "violet", "coral"];
 const SIGNAL_SHAPES = ["circle", "diamond", "triangle"];
 

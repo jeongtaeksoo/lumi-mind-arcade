@@ -3,14 +3,17 @@ import {
   MODE_INFO,
   MODE_LEVELS,
   accuracyFor,
+  canPauseStage,
   createCoveragePlan,
   createDefaultProfile,
+  createPatternTrial,
   createSignalTrial,
   createStarPath,
   difficultyFor,
   finalizeRun,
   isSignalAnswerCorrect,
   isStarStepCorrect,
+  patternTileLabel,
   readProfile,
   recordAttempt,
   scoreStage,
@@ -72,6 +75,7 @@ const timeoutIds = new Set();
 let timerInterval = null;
 let toastTimer = null;
 let audioContext = null;
+let pauseReturnFocus = null;
 const activeOscillators = new Set();
 
 function showScreen(name) {
@@ -528,10 +532,7 @@ function renderMemory(config) {
 
 function renderPattern(config) {
   const count = config.size * config.size;
-  const oddIndex = Math.floor(Math.random() * count);
-  const change = randomItem(config.changes);
-  const baseShape = randomItem(["diamond", "circle", "triangle"]);
-  const otherShape = randomItem(["diamond", "circle", "triangle"].filter((shape) => shape !== baseShape));
+  const { oddIndex, change, baseShape, otherShape } = createPatternTrial({ count, changes: config.changes });
   setAttemptProgress(0, 1);
   const board = document.createElement("div");
   board.className = "pattern-board";
@@ -547,7 +548,7 @@ function renderPattern(config) {
     tile.dataset.shape = shape;
     tile.dataset.tone = tone;
     tile.dataset.rotation = rotation;
-    tile.setAttribute("aria-label", `${index + 1}번 ${tone === "cyan" ? "청록" : "보라"} ${shape === "circle" ? "원" : shape === "triangle" ? "삼각형" : "마름모"} 타일`);
+    tile.setAttribute("aria-label", patternTileLabel({ index, tone, shape, rotation }));
     tile.addEventListener("click", () => odd ? completeChallenge() : failChallenge());
     board.appendChild(tile);
   }
@@ -810,33 +811,33 @@ function goHome() {
   stopMusic(ui.gameMusic);
   state.stageToken += 1;
   state.paused = false;
-  ui.pauseOverlay.classList.add("is-hidden");
-  ui.gameHeader.inert = false;
-  ui.gameLayout.inert = false;
+  if (ui.pauseOverlay.open) ui.pauseOverlay.close();
+  pauseReturnFocus = null;
   updateHomeRecords();
   showScreen("home");
   startHomeMusic();
 }
 
 function togglePause(forceResume = false) {
-  if (!screens.game.classList.contains("active")) return;
+  if (!canPauseStage({ gameActive: screens.game.classList.contains("active"), stageLocked: state.stageLocked })) return;
   if (!state.paused && !forceResume) {
     state.paused = true;
     state.stageToken += 1;
     clearStageTimers();
     stopTones();
-    ui.pauseOverlay.classList.remove("is-hidden");
-    ui.gameHeader.inert = true;
-    ui.gameLayout.inert = true;
+    const active = document.activeElement;
+    pauseReturnFocus = active instanceof HTMLElement && active.matches("button, [href], [tabindex]:not([tabindex='-1'])") ? active : ui.pause;
+    ui.pauseOverlay.showModal();
     ui.resume.focus();
     announce("일시정지. 재개하면 현재 문제를 새로 시작합니다.");
     return;
   }
   state.paused = false;
-  ui.pauseOverlay.classList.add("is-hidden");
-  ui.gameHeader.inert = false;
-  ui.gameLayout.inert = false;
+  ui.pauseOverlay.close();
   renderCurrentMode();
+  const focusTarget = pauseReturnFocus?.isConnected ? pauseReturnFocus : ui.pause;
+  pauseReturnFocus = null;
+  focusTarget.focus();
   announce("게임을 재개합니다. 현재 모드의 새 문제입니다.");
 }
 
@@ -861,6 +862,7 @@ ui.home.addEventListener("click", goHome);
 ui.resultHome.addEventListener("click", goHome);
 ui.pause.addEventListener("click", () => togglePause());
 ui.resume.addEventListener("click", () => togglePause(true));
+ui.pauseOverlay.addEventListener("cancel", (event) => { event.preventDefault(); togglePause(true); });
 ui.share.addEventListener("click", shareResult);
 ui.howTo.addEventListener("click", () => ui.dialog.showModal());
 ui.closeDialog.addEventListener("click", () => ui.dialog.close());

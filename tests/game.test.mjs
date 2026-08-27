@@ -15,6 +15,9 @@ import {
   recordAttempt,
   finalizeRun,
   createSignalTrial,
+  createPatternTrial,
+  patternTileLabel,
+  canPauseStage,
   isSignalAnswerCorrect,
   createStarPath,
   isStarStepCorrect,
@@ -134,6 +137,22 @@ test("level one signal keeps one rule for a pair of trials", () => {
   assert.equal(trial.rule, "color");
 });
 
+test("pending success and final-failure transitions reject pause", () => {
+  const successFeedback = { gameActive: true, stageLocked: true, outcome: "success", hearts: 5 };
+  const finalFailureFeedback = { gameActive: true, stageLocked: true, outcome: "error", hearts: 0 };
+  assert.equal(canPauseStage(successFeedback), false);
+  assert.equal(canPauseStage(finalFailureFeedback), false);
+  assert.equal(canPauseStage({ gameActive: true, stageLocked: false }), true);
+});
+
+test("rotation patterns avoid circles and name the visible rotation", () => {
+  const first = createPatternTrial({ count: 16, changes: ["rotation"], rng: () => 0 });
+  const last = createPatternTrial({ count: 16, changes: ["rotation"], rng: () => 0.999 });
+  assert.deepEqual([first.baseShape, last.baseShape], ["diamond", "triangle"]);
+  assert.equal(patternTileLabel({ index: 0, tone: "cyan", shape: "triangle", rotation: "tilted" }), "1번 청록 기울어진 삼각형 타일");
+  assert.equal(patternTileLabel({ index: 1, tone: "violet", shape: "diamond", rotation: "level" }), "2번 보라 반듯한 마름모 타일");
+});
+
 test("star path is adjacent, unique, and exactly the requested length", () => {
   const size = 5;
   const path = createStarPath({ size, length: 9, rng: fixedRng(0.1, 0.8, 0.3, 0.6) });
@@ -156,6 +175,29 @@ test("static shell exposes six modes and retains routed original music", () => {
   assert.match(html, /id="game-bgm"[^>]+origami-pavements\.mp3/);
   assert.equal(existsSync(new URL("../public/assets/velvet-tide.mp3", import.meta.url)), true);
   assert.equal(existsSync(new URL("../public/assets/origami-pavements.mp3", import.meta.url)), true);
+});
+
+test("persisted sound preference is the only home autoplay authority", () => {
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const homeAudio = html.match(/<audio id="home-bgm"[^>]*>/)?.[0] || "";
+  assert.doesNotMatch(homeAudio, /\bautoplay\b/);
+  assert.match(app, /showScreen\("home"\);\s*startHomeMusic\(\);/);
+});
+
+test("mid-width HUD uses the compact non-overflow grid", () => {
+  const css = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
+  assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.game-header \{ grid-template-columns: 38px 74px minmax\(0, 1fr\) 38px;/);
+});
+
+test("pause uses a native modal and restores game focus", () => {
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const app = readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  assert.match(html, /<dialog id="pause-overlay"/);
+  assert.match(app, /pauseOverlay\.showModal\(\)/);
+  assert.match(app, /pauseOverlay\.close\(\)/);
+  assert.match(app, /pauseReturnFocus.*isConnected[\s\S]*ui\.pause/);
+  assert.match(app, /pauseOverlay\.addEventListener\("cancel"[\s\S]*preventDefault\(\)/);
 });
 
 test("mini-games render directly without a title interstitial", () => {

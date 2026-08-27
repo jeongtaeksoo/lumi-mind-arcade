@@ -7,7 +7,7 @@
     <meta name="description" content="루미가 실수를 기억하고 다음 도전을 맞춰주는 6가지 두뇌 미니게임 아케이드" />
     <title>LUMI’S MIND ARCADE</title>
     <link rel="icon" href="./public/assets/lumi-sprite-sheet.png?v=5" />
-    <link rel="stylesheet" href="./styles.css?v=20" />
+    <link rel="stylesheet" href="./styles.css?v=21" />
   </head>
   <body>
     <a class="skip-link" href="#app-content">게임 본문으로 건너뛰기</a>
@@ -72,7 +72,7 @@
             <div class="round-meter" aria-hidden="true"><span id="round-meter-fill"></span></div>
           </aside>
         </div>
-        <div id="pause-overlay" class="pause-overlay is-hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title"><div><span aria-hidden="true">Ⅱ</span><h2 id="pause-title">잠시 멈췄어요</h2><p>재개하면 현재 문제를 새로 시작해요.<br />하트와 콤보는 그대로예요.</p><button id="resume-button" class="primary-button" type="button">계속하기</button></div></div>
+        <dialog id="pause-overlay" class="pause-overlay" aria-labelledby="pause-title"><div><span aria-hidden="true">Ⅱ</span><h2 id="pause-title">잠시 멈췄어요</h2><p>재개하면 현재 문제를 새로 시작해요.<br />하트와 콤보는 그대로예요.</p><button id="resume-button" class="primary-button" type="button">계속하기</button></div></dialog>
       </section>
 
       <section id="result-screen" class="screen result-screen" aria-labelledby="result-title">
@@ -96,8 +96,8 @@
       <p>첫 두 라운드에서 모든 모드를 만나고, 이후에는 루미가 최근 실수를 참고해 모드와 난이도를 조율해요. 기록은 계정이 아닌 이 브라우저에만 저장돼요.</p><button id="dialog-start-button" class="primary-button" type="button">도전 시작</button>
     </dialog>
     <div id="toast" class="toast" role="status" aria-live="polite"></div><div id="stage-announcer" class="sr-only" role="status" aria-live="polite"></div>
-    <audio id="home-bgm" src="./public/assets/velvet-tide.mp3?v=1" loop autoplay preload="auto" aria-hidden="true"></audio>
+    <audio id="home-bgm" src="./public/assets/velvet-tide.mp3?v=1" loop preload="auto" aria-hidden="true"></audio>
     <audio id="game-bgm" src="./public/assets/origami-pavements.mp3?v=1" loop preload="auto" aria-hidden="true"></audio>
-    <script type="module" src="./app.js?v=21"></script>
+    <script type="module" src="./app.js?v=22"></script>
   </body>
 </html>
