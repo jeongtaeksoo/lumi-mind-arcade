@@ -15,8 +15,8 @@
 - Phaser 등 게임 엔진 또는 빌드 도구를 도입하지 않는다.
 - 서버, 계정, 로그인, 클라우드 동기화, 온라인 순위표를 추가하지 않는다.
 - 기존 시스템 한국어 폰트 스택과 루미의 독창적 생성 자산을 유지한다.
-- 출처와 라이선스가 없는 `public/assets/velvet-tide.mp3`와 `public/assets/origami-pavements.mp3`를 제거한다.
-- 새 효과음은 Web Audio API로 250ms 이하 길이로 합성하며 배경음악은 추가하지 않는다.
+- 기존 제품 동작인 `public/assets/velvet-tide.mp3`와 `public/assets/origami-pavements.mp3` 및 홈/게임 라우팅을 유지한다. 저장소에 출처·라이선스 메타데이터가 없다는 잔여 위험을 사실대로 기록한다.
+- 새 효과음은 Web Audio API로 250ms 이하 길이로 합성하며 기존 배경음악과 같은 사용자 음악 설정을 따른다.
 - 새 아이콘은 CSS 도형 또는 Unicode 기본 기호만 사용한다.
 - 핵심 터치 대상은 최소 44×44 CSS px이고, 상태는 색상 하나로만 전달하지 않는다.
 - 1440×900 데스크톱과 390×844 모바일, 키보드 전용, 모션 감소 환경을 지원한다.
@@ -29,10 +29,10 @@
 - Modify `app.js`: DOM 상태, 여섯 모드 렌더러, 중앙 성공/실패 흐름, 로컬 기록 연결, Web Audio, 입력과 전환을 담당한다.
 - Modify `index.html`: 여섯 모드 홈/HUD/결과 마크업, 정확한 문구, 접근성 상태 영역, ES module 진입점을 제공한다.
 - Modify `styles.css`: 기존 최종 override를 정리하고 여섯 모드, 전환, 피드백, 데스크톱/모바일/모션 감소 스타일을 제공한다.
-- Modify `README.md`: 실제 여섯 모드, 로컬 저장, 무음 배경과 합성 효과음, 실행 방법을 설명한다.
+- Modify `README.md`: 실제 여섯 모드, 로컬 저장, 기존 배경음악 라우팅과 합성 효과음, 실행 방법을 설명한다.
 - Modify `GAME_SPEC.md`: 구현된 여섯 모드 규칙, 적응, 점수, 데이터 모델을 설계 문서와 일치시킨다.
 - Modify `design-qa.md`: 최종 브라우저 검증의 화면 크기, 입력 방식, 콘솔, 저장, 라이선스 결과를 기록한다.
-- Delete `public/assets/velvet-tide.mp3` and `public/assets/origami-pavements.mp3`: 출처가 확인되지 않는 오디오를 배포물에서 제거한다.
+- Retain `public/assets/velvet-tide.mp3` and `public/assets/origami-pavements.mp3`: 기존 홈/게임 배경음악 동작을 보존하되 확인되지 않은 라이선스를 주장하지 않는다.
 - Do not create `THIRD_PARTY_NOTICES.md`: 확정 범위에는 vendored third-party file이 없다. 실제 구현에서 제3자 파일이 추가되면 해당 파일과 고지 문서를 같은 커밋에 포함해야 한다.
 
 ---
@@ -281,19 +281,19 @@ git add game-core.mjs tests/game.test.mjs app.js
 git commit -m "feat: persist truthful local records"
 ```
 
-### Task 3: Make the shell accurately represent six modes and remove unsafe audio
+### Task 3: Make the shell accurately represent six modes and retain original music routing
 
 **Files:**
 - Modify: `index.html`
 - Modify: `styles.css`
 - Modify: `app.js`
 - Modify: `tests/game.test.mjs`
-- Delete: `public/assets/velvet-tide.mp3`
-- Delete: `public/assets/origami-pavements.mp3`
+- Retain: `public/assets/velvet-tide.mp3`
+- Retain: `public/assets/origami-pavements.mp3`
 
 **Interfaces:**
-- Produces DOM hooks: `#sound-toggle`, six `.mode-card[data-mode]`, six `[data-result-mode]`, `#record-summary`, `#save-status`, `#stage-announcer`, `#pause-overlay`.
-- Produces app functions: `setSoundEnabled(enabled)`, `playTone(kind)`, `announce(message)`.
+- Produces DOM hooks: `#music-toggle`, `#home-bgm`, `#game-bgm`, six `.mode-card[data-mode]`, six `[data-result-mode]`, `#record-summary`, `#save-status`, `#stage-announcer`, `#pause-overlay`.
+- Produces app functions: `startHomeMusic()`, `startGameMusic()`, `toggleMusic()`, `playTone(kind)`, `announce(message)`.
 - Consumes: `profile.records`, `profile.settings.soundEnabled`, `MODE_INFO`.
 
 - [ ] **Step 1: Add failing static contract tests**
@@ -301,39 +301,33 @@ git commit -m "feat: persist truthful local records"
 ```js
 import { existsSync, readFileSync } from "node:fs";
 
-test("static shell advertises six modes and contains no mp3", () => {
+test("static shell advertises six modes and retains routed original music", () => {
   const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /6가지 두뇌 미니게임/);
   assert.equal((html.match(/class="mode-card/g) || []).length, 6);
-  assert.doesNotMatch(html, /\.mp3/);
-  assert.equal(existsSync(new URL("../public/assets/velvet-tide.mp3", import.meta.url)), false);
-  assert.equal(existsSync(new URL("../public/assets/origami-pavements.mp3", import.meta.url)), false);
+  assert.match(html, /id="home-bgm"[^>]+velvet-tide\.mp3/);
+  assert.match(html, /id="game-bgm"[^>]+origami-pavements\.mp3/);
+  assert.equal(existsSync(new URL("../public/assets/velvet-tide.mp3", import.meta.url)), true);
+  assert.equal(existsSync(new URL("../public/assets/origami-pavements.mp3", import.meta.url)), true);
 });
 ```
 
 - [ ] **Step 2: Run the static test and verify failure**
 
 Run: `node --test --test-name-pattern="static shell" tests/game.test.mjs`  
-Expected: FAIL because the copy says three modes, only four cards exist, and MP3 files are present.
+Expected: FAIL because the copy says three modes, only four cards exist, and routed audio elements are incomplete.
 
 - [ ] **Step 3: Update semantic HTML and exact Korean copy**
 
-Add `신호 전환` and `별길 추적` cards, six result rows, local record summary, save status, stage announcer, and a pause overlay that says `재개하면 현재 문제를 새로 시작해요.` Remove both `<audio>` elements. Change the playfield itself from `aria-live` to a normal region; use `#stage-announcer` for polite announcements.
+Add `신호 전환` and `별길 추적` cards, six result rows, local record summary, save status, stage announcer, and a pause overlay that says `재개하면 현재 문제를 새로 시작해요.` Retain both `<audio>` elements and their existing home/game routes. Change the playfield itself from `aria-live` to a normal region; use `#stage-announcer` for polite announcements.
 
-- [ ] **Step 4: Remove the two unlicensed files**
+- [ ] **Step 4: Preserve the two original music files and routing**
 
-Delete exactly:
-
-```text
-public/assets/velvet-tide.mp3
-public/assets/origami-pavements.mp3
-```
-
-Do not add replacement music or third-party audio.
+Keep `velvet-tide.mp3` on home and `origami-pavements.mp3` during play, stop and reset the inactive track on every screen route, keep the music toggle and autoplay fallback, and record that the repository contains no source/license metadata for either file. Do not claim a license or add replacement music.
 
 - [ ] **Step 5: Add procedural tones and persistent sound setting**
 
-Create one `AudioContext` lazily after user input. `playTone("success")`, `playTone("error")`, `playTone("combo")`, and `playTone("transition")` use OscillatorNode and GainNode, last at most 250ms, and return silently if unavailable. Save the shared sound toggle through the profile.
+Create one `AudioContext` lazily after user input. `playTone("success")`, `playTone("error")`, `playTone("combo")`, and `playTone("transition")` use OscillatorNode and GainNode, last at most 250ms, and return silently if unavailable. The saved music setting controls both BGM and these short effects.
 
 - [ ] **Step 6: Consolidate only the shell selectors being edited**
 
@@ -344,13 +338,13 @@ Before adding new mode styles, collapse duplicate final definitions for `.home-c
 Run: `node --test tests/game.test.mjs`  
 Expected: all tests PASS.  
 Open home at 1440×900 and 390×844.  
-Expected: all six cards are visible, no horizontal scroll, sound toggle works after a click, Network shows no MP3 request, console has no error.
+Expected: all six cards are visible, no horizontal scroll, the music toggle works after a click, home/game routes request the correct local MP3 without overlap, and console has no error.
 
-- [ ] **Step 8: Commit the shell and asset cleanup**
+- [ ] **Step 8: Commit the six-mode shell and retained music routing**
 
 ```bash
 git add index.html styles.css app.js tests/game.test.mjs public/assets/velvet-tide.mp3 public/assets/origami-pavements.mp3
-git commit -m "feat: present six license-safe game modes"
+git commit -m "feat: present six modes with original music routing"
 ```
 
 ### Task 4: Deepen the four existing modes through the shared attempt flow
@@ -599,7 +593,7 @@ git commit -m "feat: add star trail mode"
 
 **Interfaces:**
 - Consumes: `createCoveragePlan`, `selectAdaptiveRound`, `difficultyFor`, `scoreStage`, `finalizeRun`, `writeProfile`.
-- Produces: `beginRound()`, `beginStage()`, `showStageIntro()`, `showResults()`, `togglePause()` with the behavior fixed by the design.
+- Produces: `beginRound()`, `beginStage()`, `showResults()`, `togglePause()` with the behavior fixed by the design.
 - Result accuracy is `Math.round(successes / attempts * 100)` or `null` when attempts is 0.
 
 - [ ] **Step 1: Add a failing source contract for removal of fake metrics**
@@ -625,9 +619,9 @@ At `startGame`, create one coverage plan. `beginRound` slices it for rounds 1–
 
 Remove the random `average` calculation. Build six accuracy/error rows from `state.runStats`, choose the attempted mode with greatest `weaknessFor(profile.modes[mode])`, call `finalizeRun` once behind a `state.runFinalized` guard, then call `writeProfile`. Show distinct current score/combo and local best score/combo labels. Use `—` for unplayed modes.
 
-- [ ] **Step 5: Add compact feedback and transitions**
+- [ ] **Step 5: Add compact in-place feedback and direct stage transitions**
 
-Add a 600ms stage intro, score increment text, combo milestone text at 3/5/10, selected-element error state, and success brightness response. Screen transitions use opacity plus at most 8px movement for 220ms. Reduced motion removes movement, scaling, repeated floating, urgent blinking, and shake while preserving text and border changes.
+Add score increment text, combo milestone text at 3/5/10, selected-element error state, and success brightness response. Do not add a stage-title overlay, splash, separate mode-name announcement, or input delay; `beginStage()` renders the next board immediately and updates the existing HUD in place. Screen-level transitions use opacity plus at most 8px movement for 220ms. Reduced motion removes movement, scaling, repeated floating, urgent blinking, and shake while preserving text and border changes.
 
 - [ ] **Step 6: Make pause and navigation deterministic**
 
@@ -693,11 +687,11 @@ rg -n -i 'velvet|origami|\.mp3|<audio|https?://' index.html app.js styles.css pu
 find public/assets -maxdepth 1 -type f -print | sort
 ```
 
-Expected: no MP3/audio/remote asset reference; only project-original PNG files remain. If a third-party file appears, stop and add its exact notice before continuing.
+Expected: only the two retained local MP3 routes and project PNG files appear; no remote asset reference exists. Record that the MP3 provenance is not documented rather than claiming a license. If a new third-party file appears, stop and add its exact notice before continuing.
 
 - [ ] **Step 6: Update user and game documentation to the shipped behavior**
 
-Update README and GAME_SPEC with six modes, first-two-round coverage, later adaptive selection, local-only records, actual score formula, procedural effects, no background music, accessibility controls, and static serving. Remove every statement that says three or four total modes, random cognitive scores, or guaranteed permanent saving.
+Update README and GAME_SPEC with six modes, first-two-round coverage, later adaptive selection, local-only records, actual score formula, retained home/game BGM routing, procedural effects, direct stage transitions, accessibility controls, and static serving. Remove every statement that says three or four total modes, random cognitive scores, no background music, a stage-title interstitial, or guaranteed permanent saving.
 
 - [ ] **Step 7: Record reproducible QA evidence**
 
@@ -723,7 +717,7 @@ git diff --check
 git status --short
 ```
 
-Expected: tests PASS, `git diff --check` has no output, status contains only the planned files, and no dependency or third-party asset was added.
+Expected: tests PASS, `git diff --check` has no output, status contains only the planned files, no dependency or new third-party asset was added, and the two existing MP3 files remain tracked with the provenance caveat documented.
 
 - [ ] **Step 10: Commit documentation and final QA**
 
