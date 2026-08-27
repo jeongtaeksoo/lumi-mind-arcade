@@ -3,6 +3,7 @@ import {
   MODE_INFO,
   MODE_LEVELS,
   accuracyFor,
+  canCommitHomeMusicRequest,
   canPauseStage,
   createCoveragePlan,
   createDefaultProfile,
@@ -76,6 +77,7 @@ let timerInterval = null;
 let toastTimer = null;
 let audioContext = null;
 let pauseReturnFocus = null;
+let homeMusicRequestId = 0;
 const activeOscillators = new Set();
 
 function showScreen(name) {
@@ -168,9 +170,22 @@ function stopTones() {
 
 function startHomeMusic() {
   if (!profile.settings.soundEnabled) return;
+  const requestId = ++homeMusicRequestId;
   ui.homeMusic.volume = 0.28;
   const request = ui.homeMusic.play();
-  if (request && typeof request.then === "function") request.then(() => setMusicUi(true)).catch(() => setMusicUi(false));
+  if (request && typeof request.then === "function") {
+    request.then(() => {
+      if (canCommitHomeMusicRequest({
+        requestId,
+        currentRequestId: homeMusicRequestId,
+        soundEnabled: profile.settings.soundEnabled,
+        homeActive: screens.home.classList.contains("active"),
+        paused: ui.homeMusic.paused
+      })) setMusicUi(true);
+    }).catch(() => {
+      if (requestId === homeMusicRequestId && screens.home.classList.contains("active")) setMusicUi(false);
+    });
+  }
 }
 
 function startGameMusic() {
@@ -181,6 +196,7 @@ function startGameMusic() {
 }
 
 function stopMusic(audio) {
+  if (audio === ui.homeMusic) homeMusicRequestId += 1;
   audio.pause();
   audio.currentTime = 0;
 }
@@ -195,6 +211,7 @@ function toggleMusic() {
   }
   profile.settings.soundEnabled = false;
   storagePersistent = writeProfile(storage, profile);
+  homeMusicRequestId += 1;
   ui.homeMusic.pause();
   ui.gameMusic.pause();
   stopTones();

@@ -132,6 +132,10 @@ export function canPauseStage({ gameActive, stageLocked }) {
   return gameActive && !stageLocked;
 }
 
+export function canCommitHomeMusicRequest({ requestId, currentRequestId, soundEnabled, homeActive, paused }) {
+  return requestId === currentRequestId && soundEnabled && homeActive && !paused;
+}
+
 const PATTERN_SHAPES = ["diamond", "circle", "triangle"];
 
 export function createPatternTrial({ count, changes, rng = Math.random }) {

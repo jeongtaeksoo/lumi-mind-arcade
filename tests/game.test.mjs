@@ -18,6 +18,7 @@ import {
   createPatternTrial,
   patternTileLabel,
   canPauseStage,
+  canCommitHomeMusicRequest,
   isSignalAnswerCorrect,
   createStarPath,
   isStarStepCorrect,
@@ -185,9 +186,21 @@ test("persisted sound preference is the only home autoplay authority", () => {
   assert.match(app, /showScreen\("home"\);\s*startHomeMusic\(\);/);
 });
 
+test("stale home-music completions cannot restore playing UI", () => {
+  const current = { requestId: 2, currentRequestId: 2, soundEnabled: true, homeActive: true, paused: false };
+  assert.equal(canCommitHomeMusicRequest(current), true);
+  assert.equal(canCommitHomeMusicRequest({ ...current, requestId: 1 }), false);
+  assert.equal(canCommitHomeMusicRequest({ ...current, soundEnabled: false }), false);
+  assert.equal(canCommitHomeMusicRequest({ ...current, homeActive: false }), false);
+  assert.equal(canCommitHomeMusicRequest({ ...current, paused: true }), false);
+});
+
 test("mid-width HUD uses the compact non-overflow grid", () => {
   const css = readFileSync(new URL("../styles.css", import.meta.url), "utf8");
-  assert.match(css, /@media \(max-width: 760px\)[\s\S]*?\.game-header \{ grid-template-columns: 38px 74px minmax\(0, 1fr\) 38px;/);
+  const compactHud = css.match(/@media \(max-width: 760px\) \{([\s\S]*?)\n\}/)?.[1] || "";
+  assert.match(compactHud, /\.game-header \{ grid-template-columns: 44px 74px minmax\(0, 1fr\) 74px 44px;/);
+  assert.match(compactHud, /\.hearts \{ grid-column: 1 \/ 3; grid-row: 2; position: static;/);
+  assert.doesNotMatch(compactHud, /\.hearts \{[^}]*position: absolute;/);
 });
 
 test("pause uses a native modal and restores game focus", () => {
